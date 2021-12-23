@@ -15,7 +15,6 @@ public class Main {
             FastJEngine.init("", new GameManager());
             FastJEngine.configureExceptionAction(ExceptionAction.Throw);
             FastJEngine.run();
-            throw new IllegalStateException("yeeeeeeeeet");
         } catch (Exception exception) {
             if (FastJEngine.isRunning()) {
                 FastJEngine.forceCloseGame();
