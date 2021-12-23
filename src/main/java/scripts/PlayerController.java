@@ -22,7 +22,7 @@ public class PlayerController implements Behavior {
 
     public PlayerController(Runnable playerObserver, InputManager inputManager) {
         this.rotationSpeed = 3f;
-        this.movementSpeed = 3f;
+        this.movementSpeed = 5f;
         this.inputManager = inputManager;
         this.playerObserver = playerObserver;
     }
@@ -51,11 +51,13 @@ public class PlayerController implements Behavior {
                     rotation += rotationSpeed;
                 }
 
-                movement.rotate(-(player.getRotationWithin360() + rotation));
-                player.rotate(rotation);
-                player.translate(movement);
+                if (!movement.equals(Pointf.origin()) || rotation != 0f) {
+                    movement.rotate(-(player.getRotationWithin360() + rotation));
+                    player.rotate(rotation);
+                    player.translate(movement);
 
-                playerObserver.run();
+                    playerObserver.run();
+                }
             }
         };
 
