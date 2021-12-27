@@ -1,4 +1,4 @@
-package network;
+package network.server;
 
 import tech.fastj.logging.Log;
 

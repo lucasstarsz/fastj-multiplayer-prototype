@@ -21,7 +21,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import game.GameManager;
-import network.Client;
+import network.client.Client;
 import scripts.PlayerController;
 import util.FilePaths;
 import util.Networking;

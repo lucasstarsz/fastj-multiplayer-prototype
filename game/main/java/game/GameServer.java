@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import network.Server;
-import network.ServerClient;
+import network.server.Server;
+import network.server.ServerClient;
 import util.Networking;
 
 public class GameServer implements Runnable {

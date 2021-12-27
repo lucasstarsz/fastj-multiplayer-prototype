@@ -10,8 +10,8 @@ import tech.fastj.systems.control.SceneManager;
 
 import java.io.IOException;
 
-import network.Client;
-import network.Server;
+import network.client.Client;
+import network.server.Server;
 import scene.GameScene;
 import util.Networking;
 import util.SceneNames;
