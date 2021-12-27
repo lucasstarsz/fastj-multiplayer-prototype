@@ -8,7 +8,7 @@ group('io.github.lucasstarsz')
 version('0.0.1')
 description('A multiplayer game of some sort.')
 
-application.getMainClass().set('game.ClientMain')
+application.getMainClass().set('game.ServerMain')
 application.mainModule.set('multiplayer.game')
 
 sourceSets {
