@@ -6,24 +6,54 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.util.UUID;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
-public class ServerClient {
+public class Client implements Runnable {
 
     private final Socket socket;
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
-    private final UUID uuid;
+    private ExecutorService serverListener = Executors.newSingleThreadExecutor();
+    private boolean isRunning;
+    private final Map<Byte, Consumer<Client>> serverDataActions = new HashMap<>() {{
+        put(Server.ClientAccepted, client -> {});
+    }};
 
-    public ServerClient(Socket socketClient, UUID id) throws IOException {
-        socket = socketClient;
-        uuid = id;
+    public Client(String host, int port) throws IOException {
+        socket = new Socket(host, port);
         out = new ObjectOutputStream(socket.getOutputStream());
         in = new ObjectInputStream(socket.getInputStream());
+        out.flush();
+        byte connectionStatus = in.readByte();
+        if (connectionStatus != Server.ClientAccepted) {
+            socket.close();
+            throw new IOException("Bad connection status: " + connectionStatus);
+        }
     }
 
-    public UUID getId() {
-        return uuid;
+    public boolean addServerAction(byte identifier, Consumer<Client> action) {
+        if (identifier < 1) {
+            throw new IllegalArgumentException("The identifier cannot be less than 1.");
+        }
+
+        if (serverDataActions.containsKey(identifier)) {
+            return false;
+        }
+
+        serverDataActions.put(identifier, action);
+        return true;
+    }
+
+    public Consumer<Client> replaceClientAction(byte identifier, Consumer<Client> action) {
+        return serverDataActions.put(identifier, action);
+    }
+
+    public Consumer<Client> removeClientAction(byte identifier) {
+        return serverDataActions.remove(identifier);
     }
 
     public void send(byte identifier, Object... data) throws IOException {
@@ -65,6 +95,7 @@ public class ServerClient {
             out.writeByte(identifier);
             out.writeUTF(reason);
             out.flush();
+            serverListener.shutdownNow();
             shutdown();
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -72,11 +103,6 @@ public class ServerClient {
     }
 
     public void shutdown() {
-        if (socket.isClosed()) {
-            Log.warn("client {} already closed.", uuid);
-            return;
-        }
-
         try {
             socket.shutdownOutput();
             socket.shutdownInput();
@@ -86,22 +112,37 @@ public class ServerClient {
         }
     }
 
-    synchronized void listen(Server server) {
+    @Override
+    public void run() {
+        if (isRunning) {
+            Log.warn(this.getClass(), "Client already listening to a server.");
+            return;
+        }
+        serverListener = Executors.newSingleThreadExecutor();
+        isRunning = true;
+
+        serverListener.submit(this::listen);
+    }
+
+    synchronized void listen() {
         while (!socket.isClosed()) {
             try {
                 byte identifier = in.readByte();
-                server.receive(uuid, identifier, null);
+                serverDataActions.getOrDefault(
+                        identifier,
+                        client -> Log.warn("Invalid server identifier: {}", identifier)
+                ).accept(this);
             } catch (IOException exception) {
                 try {
                     if (in.read() == -1) {
-                        server.removeClient(uuid);
-                        Log.info(ServerClient.class, "client {} closed.", uuid);
+                        Log.info("client closed.");
                         break;
                     }
                 } catch (IOException exception1) {
-                    server.receive(uuid, Server.ClientLeave, exception);
-                    server.removeClient(uuid);
+                    Log.error("", exception);
+                    Log.error("", exception1);
                 }
+                shutdown();
                 break;
             }
         }

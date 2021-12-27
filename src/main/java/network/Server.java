@@ -2,15 +2,16 @@ package network;
 
 import tech.fastj.logging.Log;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
@@ -22,16 +23,19 @@ public class Server implements Runnable {
 
     public static final byte ClientLeave = -1;
     public static final byte ClientAccepted = 0;
-    public static final byte ClientRemoved = -2;
     public static final String StopServer = "stop";
-    private final PrintStream error = System.err;
 
+    private final ServerSocket server;
+    private final PrintStream error = System.err;
     private final ExecutorService commandInterpreter = Executors.newSingleThreadExecutor();
     private final LinkedHashMap<UUID, ServerClient> clients = new LinkedHashMap<>(5, 1.0f, false);
-    private final Map<Byte, BiConsumer<DataInputStream, ServerClient>> clientDataActions = new HashMap<>() {{
-        put(ClientLeave, (dataStream, client) -> {
-            clients.remove(client.getId(), client);
-            client.disconnect(ClientLeave, "Disconnected from server.");
+
+    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientConnectActions = new ArrayList<>();
+    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDisconnectActions = new ArrayList<>();
+    private final Map<Byte, BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDataActions = new HashMap<>() {{
+        put(ClientLeave, (client, clients) -> {
+            removeClient(client.getId());
+            Log.debug(Server.class, "Disconnected {}", client.getId());
         });
     }};
     private final Map<String, BiConsumer<String, Map<UUID, ServerClient>>> serverCommandActions = new HashMap<>() {{
@@ -39,7 +43,6 @@ public class Server implements Runnable {
     }};
 
     private ExecutorService clientManager;
-    private final ServerSocket server;
     private volatile boolean isRunning;
 
     public Server(int port) throws IOException {
@@ -54,7 +57,11 @@ public class Server implements Runnable {
         server = new ServerSocket(port, backlogAmount, inetAddress);
     }
 
-    public boolean addClientAction(byte identifier, BiConsumer<DataInputStream, ServerClient> action) {
+    public Map<UUID, ServerClient> getClients() {
+        return Collections.unmodifiableMap(clients);
+    }
+
+    public boolean addClientAction(byte identifier, BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
         if (identifier < 1) {
             throw new IllegalArgumentException("The identifier cannot be less than 1.");
         }
@@ -67,15 +74,59 @@ public class Server implements Runnable {
         return true;
     }
 
-    public BiConsumer<DataInputStream, ServerClient> replaceClientAction(byte identifier, BiConsumer<DataInputStream, ServerClient> action) {
+    public BiConsumer<ServerClient, Map<UUID, ServerClient>> replaceClientAction(byte identifier, BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
         return clientDataActions.put(identifier, action);
     }
 
-    public BiConsumer<DataInputStream, ServerClient> removeClientAction(byte identifier) {
+    public BiConsumer<ServerClient, Map<UUID, ServerClient>> removeClientAction(byte identifier) {
         return clientDataActions.remove(identifier);
     }
 
-    public void receive(UUID clientId, byte identifier, Throwable exception) {
+    public void addOnClientConnect(BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
+        clientConnectActions.add(action);
+    }
+
+    public void addOnClientDisconnect(BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
+        clientDisconnectActions.add(action);
+    }
+
+    public void shutdown() {
+        if (!isRunning) {
+            return;
+        }
+
+        Log.info(Server.class, "Stopping server...");
+
+        for (ServerClient serverClient : clients.values()) {
+            clients.remove(serverClient.getId(), serverClient);
+            serverClient.disconnect(ClientLeave, "Server has stopped.");
+        }
+        try {
+            server.close();
+        } catch (IOException exception) {
+            Log.error(Server.class, "Exception while closing server", exception);
+        }
+        clientManager.shutdownNow();
+        commandInterpreter.shutdownNow();
+        isRunning = false;
+
+        Log.info(Server.class, "Server stopped.");
+    }
+
+    public void removeClient(UUID clientId) {
+        ServerClient removedClient = clients.remove(clientId);
+        if (removedClient == null) {
+            Log.warn(Server.class, "Client with id {} was not found.", clientId);
+            return;
+        }
+
+        removedClient.shutdown();
+        for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientDisconnectAction : clientDisconnectActions) {
+            clientDisconnectAction.accept(removedClient, getClients());
+        }
+    }
+
+    void receive(UUID clientId, byte identifier, Throwable exception) {
         ServerClient client = clients.get(clientId);
         if (client == null) {
             Log.warn(Server.class, "Client with id {} was not found.", clientId);
@@ -83,24 +134,24 @@ public class Server implements Runnable {
         }
 
         if (exception != null) {
-            clients.remove(clientId, client);
-            client.disconnect(ClientRemoved, exception.toString());
+            Log.debug(Server.class, "Disconnected error-filled {}: {}", clientId, exception.getMessage());
+            removeClient(clientId);
             return;
         }
 
         clientDataActions.getOrDefault(
                 identifier,
-                (dataInputStream, serverClient) -> Log.warn(
+                (currentClient, allClients) -> Log.warn(
                         Server.class,
                         "Invalid identifier {} from client {}",
                         identifier,
-                        client
+                        currentClient.getId()
                 )
-        ).accept(client.in(), client);
+        ).accept(client, getClients());
     }
 
     @Override
-    public synchronized void run() {
+    public void run() {
         if (isRunning) {
             Log.warn(this.getClass(), "Server already running.");
             return;
@@ -113,10 +164,11 @@ public class Server implements Runnable {
 
         while (isRunning) {
             try {
-                acceptClients();
-            } catch (IOException e) {
-                e.printStackTrace();
-                shutdown();
+                acceptClient();
+            } catch (IOException exception) {
+                if (!server.isClosed() || !isRunning) {
+                    shutdown();
+                }
             }
         }
 
@@ -125,46 +177,33 @@ public class Server implements Runnable {
 
     private void interpretCommands() {
         Scanner serverInput = new Scanner(System.in);
+        Log.info("Now accepting commands...");
+
         while (isRunning) {
-            String input = serverInput.nextLine().trim();
+            String input = serverInput.nextLine();
             String[] commandTokens = input.split("\\s+");
 
             serverCommandActions.getOrDefault(
                     commandTokens[0],
-                    (command, clients) -> error.printf("Invalid command: \"%s\"", command)
+                    (command, clients) -> error.printf("Invalid command: \"%s\"%n", command)
             ).accept(input, getClients());
         }
     }
 
-    private synchronized void acceptClients() throws IOException {
+    private synchronized void acceptClient() throws IOException {
         Socket client = server.accept();
         UUID clientID = UUID.randomUUID();
         ServerClient serverClient = new ServerClient(client, clientID);
 
         clients.put(clientID, serverClient);
         serverClient.out().writeByte(ClientAccepted);
+        serverClient.out().flush();
+
+        Log.debug("client {} connected.", clientID);
         clientManager.submit(() -> serverClient.listen(this));
 
-        Log.debug("received client {}", clientID);
-    }
-
-    public synchronized void shutdown() {
-        if (!isRunning) {
-            return;
+        for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientConnectAction : clientConnectActions) {
+            clientConnectAction.accept(serverClient, getClients());
         }
-
-        Log.info(Server.class, "Stopping server...");
-
-        for (ServerClient serverClient : clients.values()) {
-            clients.remove(serverClient.getId(), serverClient);
-            serverClient.disconnect(ClientLeave, "Server has stopped.");
-        }
-        clientManager.shutdownNow();
-
-        Log.info(Server.class, "Server stopped.");
-    }
-
-    public Map<UUID, ServerClient> getClients() {
-        return Collections.unmodifiableMap(clients);
     }
 }
