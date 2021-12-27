@@ -15,7 +15,7 @@ public class FilePaths {
 
     private static Path pathFromClassLoad(String resourcePath) {
         try {
-            URI resource = Objects.requireNonNull(FilePaths.class.getResource(resourcePath), "Couldn't find " + resourcePath).toURI();
+            URI resource = Objects.requireNonNull(FilePaths.class.getResource(resourcePath), "Couldn't find resource " + resourcePath).toURI();
 
             if ("jar".equals(resource.getScheme())) {
                 for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
@@ -23,6 +23,7 @@ public class FilePaths {
                         try {
                             provider.getFileSystem(resource);
                         } catch (FileSystemNotFoundException e) {
+                            // the jar file system doesn't exist yet...
                             // in this case we need to initialize it first:
                             provider.newFileSystem(resource, Collections.emptyMap());
                         }
@@ -31,8 +32,8 @@ public class FilePaths {
             }
 
             return Paths.get(resource);
-        } catch (URISyntaxException | IOException e) {
-            throw new IllegalStateException(e);
+        } catch (URISyntaxException | IOException exception) {
+            throw new IllegalStateException(exception);
         }
     }
 }

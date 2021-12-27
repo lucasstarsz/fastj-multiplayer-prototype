@@ -9,10 +9,10 @@ import javax.swing.SwingUtilities;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class Main {
+public class ClientMain {
     public static void main(String[] args) {
         try {
-            FastJEngine.init("", new GameManager());
+            FastJEngine.init("Game", new GameManager());
             FastJEngine.configureExceptionAction(ExceptionAction.Throw);
             FastJEngine.run();
         } catch (Exception exception) {
@@ -32,6 +32,7 @@ public class Main {
                                                 .toString()
                                                 .replaceFirst("\\[", "")
                                                 .replaceAll("](.*)\\[", "")
+                                                .replaceAll("(, )?at", "    at")
                                                 .replace("]", "")
                         )
                         .build();

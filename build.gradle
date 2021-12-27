@@ -31,7 +31,7 @@ description('A multiplayer game of some sort.')
 
 /* Here, we specify where the main entrypoint of the project.
  * Feel free to change these as needed. */
-application.getMainClass().set('game.Main')
+application.getMainClass().set('game.ClientMain')
 application.mainModule.set('bullet.game')
 
 
