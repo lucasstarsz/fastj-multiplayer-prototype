@@ -7,19 +7,20 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import network.security.util.SecureUtil;
+import network.server.ServerConfig;
 
 public class SecureServerSocketFactory {
 
     private static final String Instance = "JKS";
 
-    public static SSLServerSocket getServerSocket(ServerSocketConfig serverSocketConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+    public static SSLServerSocket getServerSocket(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         SSLContext sslContext = SecureUtil.generateSSLContext(secureServerConfig, Instance);
 
         SSLServerSocketFactory socketFactory = sslContext.getServerSocketFactory();
         return (SSLServerSocket) socketFactory.createServerSocket(
-                serverSocketConfig.port(),
-                serverSocketConfig.backlog(),
-                serverSocketConfig.localAddress()
+                serverConfig.port(),
+                serverConfig.backlog(),
+                serverConfig.localAddress()
         );
     }
 }

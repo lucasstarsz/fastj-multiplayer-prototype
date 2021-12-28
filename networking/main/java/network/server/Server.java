@@ -21,7 +21,6 @@ import java.util.function.BiConsumer;
 
 import network.security.SecureServerConfig;
 import network.security.SecureServerSocketFactory;
-import network.security.ServerSocketConfig;
 
 public class Server implements Runnable {
 
@@ -49,8 +48,8 @@ public class Server implements Runnable {
     private ExecutorService clientManager;
     private volatile boolean isRunning;
 
-    public Server(ServerSocketConfig serverSocketConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
-        server = SecureServerSocketFactory.getServerSocket(serverSocketConfig, secureServerConfig);
+    public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
     }
 
     public Map<UUID, ServerClient> getClients() {

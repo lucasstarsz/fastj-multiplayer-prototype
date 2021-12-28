@@ -15,7 +15,6 @@ import java.util.function.Consumer;
 
 import network.security.SecureServerConfig;
 import network.security.SecureSocketFactory;
-import network.security.SocketConfig;
 import network.server.Server;
 
 public class Client implements Runnable {
@@ -29,8 +28,8 @@ public class Client implements Runnable {
         put(Server.ClientAccepted, client -> {});
     }};
 
-    public Client(SocketConfig socketConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
-        socket = SecureSocketFactory.getSocket(socketConfig, secureServerConfig);
+    public Client(ClientConfig clientConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        socket = SecureSocketFactory.getSocket(clientConfig, secureServerConfig);
         socket.startHandshake();
 
         out = new ObjectOutputStream(socket.getOutputStream());
