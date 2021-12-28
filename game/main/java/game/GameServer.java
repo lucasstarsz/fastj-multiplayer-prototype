@@ -2,11 +2,15 @@ package game;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Map;
+import java.util.UUID;
 
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
 import network.server.ClientDataAction;
 import network.server.Server;
+import network.server.ServerClient;
+import network.server.ServerCommand;
 import network.server.ServerConfig;
 import util.FilePaths;
 import util.Networking;
@@ -26,16 +30,24 @@ public class GameServer implements Runnable {
 
         server = new Server(serverConfig, secureServerConfig);
         serverState = new ServerState(server);
-
         setupClientActions();
     }
 
     private void setupClientActions() {
         server.addOnClientConnect(serverState::syncAddPlayer);
         server.addOnClientDisconnect(serverState::syncRemovePlayer);
+        server.addServerCommand(new ServerCommand(Networking.ServerCommands.ToggleClientConnect, this::toggleClientConnect));
         server.addClientAction(new ClientDataAction(Networking.Server.KeyPress, serverState::handleKeyPress));
         server.addClientAction(new ClientDataAction(Networking.Server.KeyRelease, serverState::handleKeyRelease));
         server.addClientAction(new ClientDataAction(Networking.Server.SyncTransform, serverState::syncPlayerTransform));
+    }
+
+    private void toggleClientConnect(String s, Map<UUID, ServerClient> uuidServerClientMap) {
+        if (server.isAcceptingClients()) {
+            server.disallowClients();
+        } else {
+            server.allowClients();
+        }
     }
 
     @Override

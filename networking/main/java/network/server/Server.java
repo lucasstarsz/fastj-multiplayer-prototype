@@ -27,10 +27,6 @@ public class Server implements Runnable {
     public static final byte ClientAccepted = 0;
     public static final String StopServer = "stop";
 
-    private final SSLServerSocket server;
-    private final ExecutorService commandInterpreter = Executors.newSingleThreadExecutor();
-    private final ExecutorService clientAccepter = Executors.newSingleThreadExecutor();
-
     public final ServerCommand shutdownCommand = new ServerCommand(StopServer, (command, clients) -> shutdown());
     public final ServerCommand invalidCommand = new ServerCommand("", (command, clients) -> System.err.printf("Invalid command: \"%s\"%n", command));
     public final ClientDataAction clientDisconnectAction = new ClientDataAction(ClientLeave, (client, clients) -> {
@@ -38,12 +34,16 @@ public class Server implements Runnable {
         Log.debug(this.getClass(), "Disconnected {}", client.getId());
     });
 
+    private final SSLServerSocket server;
+    private final ExecutorService commandInterpreter;
+
     private final LinkedHashMap<UUID, ServerClient> clients;
     private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientConnectActions;
     private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDisconnectActions;
     private final Map<Byte, ClientDataAction> clientDataActions;
     private final Map<String, ServerCommand> serverCommandActions;
 
+    private ExecutorService clientAccepter;
     private ExecutorService clientManager;
     private volatile boolean isRunning;
     private volatile boolean isAcceptingClients;
@@ -59,10 +59,20 @@ public class Server implements Runnable {
         clientDataActions.put(ClientLeave, clientDisconnectAction);
         serverCommandActions = new HashMap<>();
         serverCommandActions.put(StopServer, shutdownCommand);
+        clientAccepter = Executors.newSingleThreadExecutor();
+        commandInterpreter = Executors.newSingleThreadExecutor();
     }
 
     public Map<UUID, ServerClient> getClients() {
         return Collections.unmodifiableMap(clients);
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public boolean isAcceptingClients() {
+        return isAcceptingClients;
     }
 
     public boolean addClientAction(ClientDataAction dataAction) {
@@ -92,6 +102,27 @@ public class Server implements Runnable {
 
     public void addOnClientDisconnect(BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
         clientDisconnectActions.add(action);
+    }
+
+    public boolean addServerCommand(ServerCommand serverCommand) {
+        if (serverCommand.keyword().equalsIgnoreCase(StopServer)) {
+            throw new IllegalArgumentException("The server command keyword cannot be " + StopServer + ".");
+        }
+
+        if (serverCommandActions.containsKey(serverCommand.keyword())) {
+            return false;
+        }
+
+        serverCommandActions.put(serverCommand.keyword(), serverCommand);
+        return true;
+    }
+
+    public ServerCommand replaceServerCommand(ServerCommand serverCommand) {
+        return serverCommandActions.put(serverCommand.keyword(), serverCommand);
+    }
+
+    public ServerCommand removeServerCommand(ServerCommand serverCommand) {
+        return serverCommandActions.put(serverCommand.keyword(), serverCommand);
     }
 
     public void shutdown() {
@@ -168,12 +199,34 @@ public class Server implements Runnable {
     }
 
     public void allowClients() {
+        if (!isRunning) {
+            Log.warn(this.getClass(), "Server not running.");
+            return;
+        }
+
         if (isAcceptingClients) {
             Log.warn(this.getClass(), "Server already accepting clients.");
             return;
         }
 
+        if (clientAccepter.isShutdown()) {
+            clientAccepter = Executors.newSingleThreadExecutor();
+        }
         clientAccepter.submit(this::acceptClients);
+    }
+
+    public void disallowClients() {
+        if (!isRunning) {
+            Log.warn(this.getClass(), "Server not running.");
+            return;
+        }
+
+        if (!isAcceptingClients) {
+            Log.warn(this.getClass(), "Server not accepting clients.");
+            return;
+        }
+
+        clientAccepter.shutdownNow();
     }
 
     private void interpretCommands() {
@@ -184,7 +237,7 @@ public class Server implements Runnable {
             String input = serverInput.nextLine();
             String[] commandTokens = input.split("\\s+");
 
-            serverCommandActions.getOrDefault(commandTokens[0], invalidCommand)
+            serverCommandActions.getOrDefault(commandTokens[0].toLowerCase(), invalidCommand)
                     .commandAction()
                     .accept(input, getClients());
         }

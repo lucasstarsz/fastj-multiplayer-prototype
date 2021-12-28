@@ -9,6 +9,10 @@ public class Networking {
         public static final byte SyncTransform = 3;
     }
 
+    public static class ServerCommands {
+        public static final String ToggleClientConnect = "clientconnect";
+    }
+
     public static class Client {
         public static final byte PlayerKeyPress = 1;
         public static final byte PlayerKeyRelease = 2;
