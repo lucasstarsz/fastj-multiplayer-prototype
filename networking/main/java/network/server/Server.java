@@ -4,7 +4,6 @@ import tech.fastj.logging.Log;
 
 import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -29,16 +28,16 @@ public class Server implements Runnable {
     public static final String StopServer = "stop";
 
     private final SSLServerSocket server;
-    private final PrintStream error = System.err;
     private final ExecutorService commandInterpreter = Executors.newSingleThreadExecutor();
-    private final LinkedHashMap<UUID, ServerClient> clients = new LinkedHashMap<>(5, 1.0f, false);
+    private final ExecutorService clientAccepter = Executors.newSingleThreadExecutor();
 
+    private final LinkedHashMap<UUID, ServerClient> clients = new LinkedHashMap<>(5, 1.0f, false);
     private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientConnectActions = new ArrayList<>();
     private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDisconnectActions = new ArrayList<>();
     private final Map<Byte, BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDataActions = new HashMap<>() {{
         put(ClientLeave, (client, clients) -> {
             removeClient(client.getId());
-            Log.debug(Server.class, "Disconnected {}", client.getId());
+            Log.debug(this.getClass(), "Disconnected {}", client.getId());
         });
     }};
     private final Map<String, BiConsumer<String, Map<UUID, ServerClient>>> serverCommandActions = new HashMap<>() {{
@@ -47,6 +46,7 @@ public class Server implements Runnable {
 
     private ExecutorService clientManager;
     private volatile boolean isRunning;
+    private volatile boolean isAcceptingClients;
 
     public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
@@ -90,28 +90,31 @@ public class Server implements Runnable {
             return;
         }
 
-        Log.info(Server.class, "Stopping server...");
+        Log.info(this.getClass(), "Stopping server...");
 
         for (ServerClient serverClient : clients.values()) {
             clients.remove(serverClient.getId(), serverClient);
             serverClient.disconnect(ClientLeave, "Server has stopped.");
         }
+
         try {
             server.close();
         } catch (IOException exception) {
-            Log.error(Server.class, "Exception while closing server", exception);
+            Log.error(this.getClass(), "Exception while closing server", exception);
         }
+
         clientManager.shutdownNow();
         commandInterpreter.shutdownNow();
+        clientAccepter.shutdownNow();
         isRunning = false;
 
-        Log.info(Server.class, "Server stopped.");
+        Log.info(this.getClass(), "Server stopped.");
     }
 
     public void removeClient(UUID clientId) {
         ServerClient removedClient = clients.remove(clientId);
         if (removedClient == null) {
-            Log.warn(Server.class, "Client with id {} was not found.", clientId);
+            Log.warn(this.getClass(), "Client with id {} was not found.", clientId);
             return;
         }
 
@@ -124,12 +127,12 @@ public class Server implements Runnable {
     void receive(UUID clientId, byte identifier, Throwable exception) {
         ServerClient client = clients.get(clientId);
         if (client == null) {
-            Log.warn(Server.class, "Client with id {} was not found.", clientId);
+            Log.warn(this.getClass(), "Client with id {} was not found.", clientId);
             return;
         }
 
         if (exception != null) {
-            Log.debug(Server.class, "Disconnected error-filled {}: {}", clientId, exception.getMessage());
+            Log.debug(this.getClass(), "Disconnected error-filled {}: {}", clientId, exception.getMessage());
             removeClient(clientId);
             return;
         }
@@ -137,7 +140,7 @@ public class Server implements Runnable {
         clientDataActions.getOrDefault(
                 identifier,
                 (currentClient, allClients) -> Log.warn(
-                        Server.class,
+                        this.getClass(),
                         "Invalid identifier {} from client {}",
                         identifier,
                         currentClient.getId()
@@ -151,28 +154,22 @@ public class Server implements Runnable {
             Log.warn(this.getClass(), "Server already running.");
             return;
         }
-        clientManager = Executors.newCachedThreadPool();
         isRunning = true;
-
         commandInterpreter.submit(this::interpretCommands);
-        Log.info(this.getClass(), "Now accepting clients...");
+    }
 
-        while (isRunning) {
-            try {
-                acceptClient();
-            } catch (IOException exception) {
-                if (!server.isClosed() || !isRunning) {
-                    shutdown();
-                }
-            }
+    public void allowClients() {
+        if (isAcceptingClients) {
+            Log.warn(this.getClass(), "Server already accepting clients.");
+            return;
         }
 
-        shutdown();
+        clientAccepter.submit(this::acceptClients);
     }
 
     private void interpretCommands() {
         Scanner serverInput = new Scanner(System.in);
-        Log.info("Now accepting commands...");
+        Log.info(this.getClass(), "Now accepting commands...");
 
         while (isRunning) {
             String input = serverInput.nextLine();
@@ -180,8 +177,28 @@ public class Server implements Runnable {
 
             serverCommandActions.getOrDefault(
                     commandTokens[0],
-                    (command, clients) -> error.printf("Invalid command: \"%s\"%n", command)
+                    (command, clients) -> System.err.printf("Invalid command: \"%s\"%n", command)
             ).accept(input, getClients());
+        }
+    }
+
+    private void acceptClients() {
+        isAcceptingClients = true;
+        Log.info(this.getClass(), "Now accepting clients...");
+
+        if (clientManager != null) {
+            clientManager.shutdownNow();
+        }
+        clientManager = Executors.newCachedThreadPool();
+
+        while (isAcceptingClients) {
+            try {
+                acceptClient();
+            } catch (IOException exception) {
+                if (!isRunning || !isAcceptingClients) {
+                    break;
+                }
+            }
         }
     }
 
