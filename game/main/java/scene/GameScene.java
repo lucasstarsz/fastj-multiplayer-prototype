@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import game.GameManager;
 import network.client.Client;
+import objects.Player;
 import scripts.PlayerController;
 import util.FilePaths;
 import util.Networking;
@@ -32,10 +33,10 @@ import static scripts.PlayerController.RotationSpeed;
 
 public class GameScene extends Scene {
 
-    private Model2D player;
+    private Player player;
     private int playerNumber;
 
-    private final Map<Integer, Model2D> otherPlayers = new HashMap<>();
+    private final Map<Integer, Player> otherPlayers = new HashMap<>();
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
     private ScheduledExecutorService transformSync;
 
@@ -47,7 +48,12 @@ public class GameScene extends Scene {
     @Override
     public void load(FastJCanvas canvas) {
         Client client = FastJEngine.<GameManager>getLogicManager().getClient();
-        player = Model2D.fromPolygons(ModelUtil.loadModel(FilePaths.Player));
+        player = new Player(
+                Model2D.fromPolygons(ModelUtil.loadModel(FilePaths.Player)),
+                playerNumber,
+                true
+        );
+
         PlayerController playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
         player.addBehavior(playerController, this);
         drawableManager.addGameObject(player);
@@ -72,7 +78,7 @@ public class GameScene extends Scene {
     }
 
     public void syncOtherPlayer(int otherPlayerNumber, float translationX, float translationY, float rotation) {
-        Model2D otherPlayer = otherPlayers.get(otherPlayerNumber);
+        Player otherPlayer = otherPlayers.get(otherPlayerNumber);
         otherPlayer.setTranslation(new Pointf(translationX, translationY));
         otherPlayer.setRotation(rotation);
     }
@@ -92,7 +98,7 @@ public class GameScene extends Scene {
     @Override
     public void update(FastJCanvas canvas) {
         for (Map.Entry<Integer, Transform2D> otherPlayerTransform : otherPlayerTransforms.entrySet()) {
-            Model2D player = otherPlayers.get(otherPlayerTransform.getKey());
+            Player player = otherPlayers.get(otherPlayerTransform.getKey());
             if (player == null) {
                 continue;
             }
@@ -104,8 +110,6 @@ public class GameScene extends Scene {
     }
 
     public void updatePlayerInfo() {
-//        Log.info(GameScene.class, "Player Position: {}", player.getCenter());
-//        Log.info(GameScene.class, "Player Rotation: {}", player.getRotationWithin360());
     }
 
     public void addNewPlayer(int newPlayerNumber) {
@@ -117,7 +121,11 @@ public class GameScene extends Scene {
         Polygon2D[] playerModel = ModelUtil.loadModel(FilePaths.Player);
         playerModel[0].setFill(DrawUtil.randomColor());
 
-        Model2D newPlayer = Model2D.fromPolygons(playerModel);
+        Player newPlayer = new Player(
+                Model2D.fromPolygons(playerModel),
+                newPlayerNumber,
+                false
+        );
         drawableManager.addGameObject(newPlayer);
         otherPlayers.put(newPlayerNumber, newPlayer);
         otherPlayerTransforms.put(newPlayerNumber, new Transform2D());
@@ -145,7 +153,7 @@ public class GameScene extends Scene {
     }
 
     public void removePlayer(int removedPlayerNumber) {
-        Model2D removedPlayer = otherPlayers.remove(removedPlayerNumber);
+        Player removedPlayer = otherPlayers.remove(removedPlayerNumber);
         drawableManager.removeGameObject(removedPlayer.getID());
         otherPlayerTransforms.remove(removedPlayerNumber);
     }

@@ -3,11 +3,16 @@ package game;
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
 import tech.fastj.graphics.display.FastJCanvas;
+import tech.fastj.graphics.display.RenderSettings;
 import tech.fastj.graphics.display.SimpleDisplay;
 
 import tech.fastj.input.keyboard.Keys;
 import tech.fastj.systems.control.SceneManager;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
@@ -32,6 +37,22 @@ public class GameManager extends SceneManager {
 
     @Override
     public void init(FastJCanvas canvas) {
+        canvas.setBackgroundColor(Color.lightGray.darker());
+        canvas.modifyRenderSettings(RenderSettings.TextAntialiasing.Enable);
+
+        try {
+            Font notoSansRegular = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansRegularPath);
+            Font notoSansBold = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBoldPath);
+            Font notoSansBoldItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBoldItalicPath);
+            Font notoSansItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansItalicPath);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansRegular);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansBold);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansBoldItalic);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansItalic);
+        } catch (FontFormatException | IOException exception) {
+            FastJEngine.error("Couldn't load font file: " + exception.getMessage(), exception);
+        }
+
         try {
             Log.info("connecting....");
             client = new Client(

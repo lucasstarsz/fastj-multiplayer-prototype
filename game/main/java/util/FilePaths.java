@@ -13,8 +13,13 @@ import java.util.Objects;
 
 public class FilePaths {
     public static final Path Player = pathFromClassLoad("/player.psdf");
+    public static final Path PlayerArrow = pathFromClassLoad("/playerarrow.psdf");
     public static final InputStream PublicGameKeyPath = FilePaths.class.getResourceAsStream("/public_game_key.jks");
     public static final InputStream PrivateGameKeyPath = FilePaths.class.getResourceAsStream("/private_game_key.jks");
+    public static final InputStream NotoSansRegularPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Regular.ttf");
+    public static final InputStream NotoSansBoldPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Bold.ttf");
+    public static final InputStream NotoSansBoldItalicPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-BoldItalic.ttf");
+    public static final InputStream NotoSansItalicPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Italic.ttf");
 
     private static Path pathFromClassLoad(String resourcePath) {
         try {
