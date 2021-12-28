@@ -2,21 +2,25 @@ package network.client;
 
 import tech.fastj.logging.Log;
 
+import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
+import network.security.SecureServerConfig;
+import network.security.SecureSocketFactory;
+import network.security.SocketConfig;
 import network.server.Server;
 
 public class Client implements Runnable {
 
-    private final Socket socket;
+    private final SSLSocket socket;
     private final ObjectInputStream in;
     private final ObjectOutputStream out;
     private ExecutorService serverListener = Executors.newSingleThreadExecutor();
@@ -25,8 +29,10 @@ public class Client implements Runnable {
         put(Server.ClientAccepted, client -> {});
     }};
 
-    public Client(String host, int port) throws IOException {
-        socket = new Socket(host, port);
+    public Client(SocketConfig socketConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        socket = SecureSocketFactory.getSocket(socketConfig, secureServerConfig);
+        socket.startHandshake();
+
         out = new ObjectOutputStream(socket.getOutputStream());
         in = new ObjectInputStream(socket.getInputStream());
         out.flush();
@@ -106,6 +112,7 @@ public class Client implements Runnable {
 
     public void shutdown() {
         try {
+            out.flush();
             socket.shutdownOutput();
             socket.shutdownInput();
             socket.close();

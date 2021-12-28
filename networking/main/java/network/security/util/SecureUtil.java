@@ -8,15 +8,12 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyManagementException;
+import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 
-import network.security.SecureTypes;
+import network.security.SecureServerConfig;
 
 public class SecureUtil {
 
@@ -34,7 +31,7 @@ public class SecureUtil {
         return null;
     }
 
-    public static X509KeyManager getKeyManager(KeyStore keystore, String password) throws NoSuchAlgorithmException, KeyStoreException, UnrecoverableKeyException {
+    public static X509KeyManager getKeyManager(KeyStore keystore, String password) throws GeneralSecurityException {
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keystore, password.toCharArray());
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
@@ -48,15 +45,14 @@ public class SecureUtil {
         return null;
     }
 
-    public static SSLContext generateSSLContext(InputStream certificateFileStream, String certificatePassword, SecureTypes secureTypes, String instance)
-            throws CertificateException, IOException, KeyManagementException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
+    public static SSLContext generateSSLContext(SecureServerConfig secureServerConfig, String instance) throws IOException, GeneralSecurityException {
         KeyStore keyStore = KeyStore.getInstance(instance);
-        keyStore.load(certificateFileStream, certificatePassword.toCharArray());
+        keyStore.load(secureServerConfig.certificateFile(), secureServerConfig.certificatePassword().toCharArray());
 
         X509TrustManager keyStoreTrustManager = SecureUtil.getTrustManager(keyStore);
-        X509KeyManager keyStoreKeyManager = SecureUtil.getKeyManager(keyStore, certificatePassword);
+        X509KeyManager keyStoreKeyManager = SecureUtil.getKeyManager(keyStore, secureServerConfig.certificatePassword());
 
-        SSLContext sslContext = SSLContext.getInstance(secureTypes.rawType);
+        SSLContext sslContext = SSLContext.getInstance(secureServerConfig.secureType().rawType);
         sslContext.init(
                 new KeyManager[]{keyStoreKeyManager},
                 new X509TrustManager[]{keyStoreTrustManager},

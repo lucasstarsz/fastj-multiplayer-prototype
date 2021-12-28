@@ -2,11 +2,11 @@ package network.server;
 
 import tech.fastj.logging.Log;
 
+import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,13 +19,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 
+import network.security.SecureServerConfig;
+import network.security.SecureServerSocketFactory;
+import network.security.ServerSocketConfig;
+
 public class Server implements Runnable {
 
     public static final byte ClientLeave = -1;
     public static final byte ClientAccepted = 0;
     public static final String StopServer = "stop";
 
-    private final ServerSocket server;
+    private final SSLServerSocket server;
     private final PrintStream error = System.err;
     private final ExecutorService commandInterpreter = Executors.newSingleThreadExecutor();
     private final LinkedHashMap<UUID, ServerClient> clients = new LinkedHashMap<>(5, 1.0f, false);
@@ -45,16 +49,8 @@ public class Server implements Runnable {
     private ExecutorService clientManager;
     private volatile boolean isRunning;
 
-    public Server(int port) throws IOException {
-        server = new ServerSocket(port);
-    }
-
-    public Server(int port, int backlogAmount) throws IOException {
-        server = new ServerSocket(port, backlogAmount);
-    }
-
-    public Server(int port, int backlogAmount, InetAddress inetAddress) throws IOException {
-        server = new ServerSocket(port, backlogAmount, inetAddress);
+    public Server(ServerSocketConfig serverSocketConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        server = SecureServerSocketFactory.getServerSocket(serverSocketConfig, secureServerConfig);
     }
 
     public Map<UUID, ServerClient> getClients() {
