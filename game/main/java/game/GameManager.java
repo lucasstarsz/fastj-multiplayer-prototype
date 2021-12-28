@@ -88,7 +88,7 @@ public class GameManager extends SceneManager {
                 } catch (IOException exception) {
                     FastJEngine.error("IO error", exception);
                 } catch (IllegalArgumentException exception) {
-                    Log.warn(GameServer.class, "Invalid key press {} from player {}", key, playerNumber);
+                    Log.warn(GameManager.class, "Invalid identifier press {} from player {}", key, playerNumber);
                 }
             });
             client.addServerAction(Networking.Client.PlayerKeyRelease, client -> {
@@ -102,7 +102,7 @@ public class GameManager extends SceneManager {
                 } catch (IOException exception) {
                     FastJEngine.error("IO error", exception);
                 } catch (IllegalArgumentException exception) {
-                    Log.warn(GameServer.class, "Invalid key release {} from player {}", key, playerNumber);
+                    Log.warn(GameManager.class, "Invalid identifier release {} from player {}", key, playerNumber);
                 }
             });
 
