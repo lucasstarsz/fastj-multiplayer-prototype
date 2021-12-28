@@ -18,7 +18,7 @@ import util.Networking;
 
 public class PlayerController implements Behavior {
 
-    public static final float MovementSpeed = 3f;
+    public static final float MovementSpeed = 5f;
     public static final float RotationSpeed = 5f;
 
     private final InputManager inputManager;
