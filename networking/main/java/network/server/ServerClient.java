@@ -79,13 +79,6 @@ public class ServerClient {
 
         try {
             out.flush();
-            int available = in.available();
-            if (available > 0) {
-                byte[] read = new byte[available];
-                in.readFully(read, 0, available);
-            }
-            socket.shutdownOutput();
-            socket.shutdownInput();
             socket.close();
         } catch (IOException exception) {
             exception.printStackTrace();

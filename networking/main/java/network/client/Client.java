@@ -112,8 +112,6 @@ public class Client implements Runnable {
     public void shutdown() {
         try {
             out.flush();
-            socket.shutdownOutput();
-            socket.shutdownInput();
             socket.close();
         } catch (IOException exception) {
             exception.printStackTrace();
