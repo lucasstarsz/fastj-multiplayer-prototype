@@ -31,18 +31,18 @@ public class Server implements Runnable {
     private final ExecutorService commandInterpreter = Executors.newSingleThreadExecutor();
     private final ExecutorService clientAccepter = Executors.newSingleThreadExecutor();
 
-    private final LinkedHashMap<UUID, ServerClient> clients = new LinkedHashMap<>(5, 1.0f, false);
-    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientConnectActions = new ArrayList<>();
-    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDisconnectActions = new ArrayList<>();
-    private final Map<Byte, BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDataActions = new HashMap<>() {{
-        put(ClientLeave, (client, clients) -> {
-            removeClient(client.getId());
-            Log.debug(this.getClass(), "Disconnected {}", client.getId());
-        });
-    }};
-    private final Map<String, BiConsumer<String, Map<UUID, ServerClient>>> serverCommandActions = new HashMap<>() {{
-        put(StopServer, (command, clients) -> shutdown());
-    }};
+    public final ServerCommand shutdownCommand = new ServerCommand(StopServer, (command, clients) -> shutdown());
+    public final ServerCommand invalidCommand = new ServerCommand("", (command, clients) -> System.err.printf("Invalid command: \"%s\"%n", command));
+    public final ClientDataAction clientDisconnectAction = new ClientDataAction(ClientLeave, (client, clients) -> {
+        removeClient(client.getId());
+        Log.debug(this.getClass(), "Disconnected {}", client.getId());
+    });
+
+    private final LinkedHashMap<UUID, ServerClient> clients;
+    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientConnectActions;
+    private final List<BiConsumer<ServerClient, Map<UUID, ServerClient>>> clientDisconnectActions;
+    private final Map<Byte, ClientDataAction> clientDataActions;
+    private final Map<String, ServerCommand> serverCommandActions;
 
     private ExecutorService clientManager;
     private volatile boolean isRunning;
@@ -50,30 +50,39 @@ public class Server implements Runnable {
 
     public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
+
+        clients = new LinkedHashMap<>(5, 1.0f, false);
+        clientConnectActions = new ArrayList<>();
+        clientDisconnectActions = new ArrayList<>();
+
+        clientDataActions = new HashMap<>();
+        clientDataActions.put(ClientLeave, clientDisconnectAction);
+        serverCommandActions = new HashMap<>();
+        serverCommandActions.put(StopServer, shutdownCommand);
     }
 
     public Map<UUID, ServerClient> getClients() {
         return Collections.unmodifiableMap(clients);
     }
 
-    public boolean addClientAction(byte identifier, BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
-        if (identifier < 1) {
+    public boolean addClientAction(ClientDataAction dataAction) {
+        if (dataAction.identifier() < 1) {
             throw new IllegalArgumentException("The identifier cannot be less than 1.");
         }
 
-        if (clientDataActions.containsKey(identifier)) {
+        if (clientDataActions.containsKey(dataAction.identifier())) {
             return false;
         }
 
-        clientDataActions.put(identifier, action);
+        clientDataActions.put(dataAction.identifier(), dataAction);
         return true;
     }
 
-    public BiConsumer<ServerClient, Map<UUID, ServerClient>> replaceClientAction(byte identifier, BiConsumer<ServerClient, Map<UUID, ServerClient>> action) {
-        return clientDataActions.put(identifier, action);
+    public ClientDataAction replaceClientAction(ClientDataAction dataAction) {
+        return clientDataActions.put(dataAction.identifier(), dataAction);
     }
 
-    public BiConsumer<ServerClient, Map<UUID, ServerClient>> removeClientAction(byte identifier) {
+    public ClientDataAction removeClientAction(byte identifier) {
         return clientDataActions.remove(identifier);
     }
 
@@ -139,13 +148,13 @@ public class Server implements Runnable {
 
         clientDataActions.getOrDefault(
                 identifier,
-                (currentClient, allClients) -> Log.warn(
+                new ClientDataAction(identifier, (currentClient, allClients) -> Log.warn(
                         this.getClass(),
                         "Invalid identifier {} from client {}",
                         identifier,
                         currentClient.getId()
-                )
-        ).accept(client, getClients());
+                ))
+        ).dataAction().accept(client, getClients());
     }
 
     @Override
@@ -175,10 +184,9 @@ public class Server implements Runnable {
             String input = serverInput.nextLine();
             String[] commandTokens = input.split("\\s+");
 
-            serverCommandActions.getOrDefault(
-                    commandTokens[0],
-                    (command, clients) -> System.err.printf("Invalid command: \"%s\"%n", command)
-            ).accept(input, getClients());
+            serverCommandActions.getOrDefault(commandTokens[0], invalidCommand)
+                    .commandAction()
+                    .accept(input, getClients());
         }
     }
 

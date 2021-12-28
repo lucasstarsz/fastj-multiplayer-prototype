@@ -5,6 +5,7 @@ import java.security.GeneralSecurityException;
 
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
+import network.server.ClientDataAction;
 import network.server.Server;
 import network.server.ServerConfig;
 import util.FilePaths;
@@ -32,9 +33,9 @@ public class GameServer implements Runnable {
     private void setupClientActions() {
         server.addOnClientConnect(serverState::syncAddPlayer);
         server.addOnClientDisconnect(serverState::syncRemovePlayer);
-        server.addClientAction(Networking.Server.KeyPress, serverState::handleKeyPress);
-        server.addClientAction(Networking.Server.KeyRelease, serverState::handleKeyRelease);
-        server.addClientAction(Networking.Server.SyncTransform, serverState::syncPlayerTransform);
+        server.addClientAction(new ClientDataAction(Networking.Server.KeyPress, serverState::handleKeyPress));
+        server.addClientAction(new ClientDataAction(Networking.Server.KeyRelease, serverState::handleKeyRelease));
+        server.addClientAction(new ClientDataAction(Networking.Server.SyncTransform, serverState::syncPlayerTransform));
     }
 
     @Override
