@@ -6,12 +6,17 @@ import tech.fastj.logging.Log;
 import tech.fastj.input.keyboard.Keys;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import network.security.SecureServerConfig;
+import network.security.SecureTypes;
+import network.server.ServerConfig;
 import network.server.Server;
 import network.server.ServerClient;
+import util.FilePaths;
 import util.Networking;
 
 public class GameServer implements Runnable {
@@ -21,8 +26,15 @@ public class GameServer implements Runnable {
     private final Map<Integer, ServerClient> players = new HashMap<>();
     private final Server server;
 
-    public GameServer() throws IOException {
-        server = new Server(Networking.Port);
+    public GameServer() throws IOException, GeneralSecurityException {
+        server = new Server(
+                new ServerConfig(Networking.Port),
+                new SecureServerConfig(
+                        FilePaths.PrivateGameKeyPath,
+                        "sslpassword",
+                        SecureTypes.TLSv1_3
+                )
+        );
         initialize();
     }
 

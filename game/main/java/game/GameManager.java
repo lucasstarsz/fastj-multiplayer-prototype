@@ -9,10 +9,15 @@ import tech.fastj.input.keyboard.Keys;
 import tech.fastj.systems.control.SceneManager;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 import network.client.Client;
+import network.client.ClientConfig;
+import network.security.SecureServerConfig;
+import network.security.SecureTypes;
 import network.server.Server;
 import scene.GameScene;
+import util.FilePaths;
 import util.Networking;
 import util.SceneNames;
 
@@ -29,7 +34,14 @@ public class GameManager extends SceneManager {
     public void init(FastJCanvas canvas) {
         try {
             Log.info("connecting....");
-            client = new Client("localhost", Networking.Port);
+            client = new Client(
+                    new ClientConfig("localhost", Networking.Port),
+                    new SecureServerConfig(
+                            FilePaths.PublicGameKeyPath,
+                            "sslpublicpassword",
+                            SecureTypes.TLSv1_3
+                    )
+            );
             Log.info("connected.");
             int playerNumber = client.in().readInt();
             FastJEngine.<SimpleDisplay>getDisplay().setTitle("Game: Player " + playerNumber);
@@ -99,7 +111,7 @@ public class GameManager extends SceneManager {
             setCurrentScene(SceneNames.GameScene);
             loadCurrentScene();
             client.run();
-        } catch (IOException exception) {
+        } catch (IOException | GeneralSecurityException exception) {
             FastJEngine.error("Couldn't connect", exception);
         }
     }

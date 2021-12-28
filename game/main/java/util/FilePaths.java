@@ -1,6 +1,7 @@
 package util;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystemNotFoundException;
@@ -12,6 +13,8 @@ import java.util.Objects;
 
 public class FilePaths {
     public static final Path Player = pathFromClassLoad("/player.psdf");
+    public static final InputStream PublicGameKeyPath = FilePaths.class.getResourceAsStream("/public_game_key.jks");
+    public static final InputStream PrivateGameKeyPath = FilePaths.class.getResourceAsStream("/private_game_key.jks");
 
     private static Path pathFromClassLoad(String resourcePath) {
         try {

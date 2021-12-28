@@ -47,4 +47,5 @@ gradle.properties
 hs_err_pid*
 
 # Keystore
-private_game_key.jks
+*.jks
+*.cer
