@@ -12,36 +12,50 @@ import java.util.Collections;
 import java.util.Objects;
 
 public class FilePaths {
+
     public static final Path Player = pathFromClassLoad("/player.psdf");
     public static final Path PlayerArrow = pathFromClassLoad("/playerarrow.psdf");
-    public static final InputStream PublicGameKeyPath = FilePaths.class.getResourceAsStream("/public_game_key.jks");
-    public static final InputStream PrivateGameKeyPath = FilePaths.class.getResourceAsStream("/private_game_key.jks");
-    public static final InputStream NotoSansRegularPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Regular.ttf");
-    public static final InputStream NotoSansBoldPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Bold.ttf");
-    public static final InputStream NotoSansBoldItalicPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-BoldItalic.ttf");
-    public static final InputStream NotoSansItalicPath = FilePaths.class.getResourceAsStream("/Noto_Sans/NotoSans-Italic.ttf");
+    public static final InputStream PublicGameKey = getStreamResource("/clienttruststore.pkcs12");
+    public static final InputStream PrivateGameKey = getStreamResource("/serverkeystore.pkcs12");
+    public static final InputStream NotoSansRegular = getStreamResource("/Noto_Sans/NotoSans-Regular.ttf");
+    public static final InputStream NotoSansBold = getStreamResource("/Noto_Sans/NotoSans-Bold.ttf");
+    public static final InputStream NotoSansBoldItalic = getStreamResource("/Noto_Sans/NotoSans-BoldItalic.ttf");
+    public static final InputStream NotoSansItalic = getStreamResource("/Noto_Sans/NotoSans-Italic.ttf");
+
+    private static InputStream getStreamResource(String resourcePath) {
+        return Objects.requireNonNull(
+                FilePaths.class.getResourceAsStream(resourcePath),
+                "Couldn't find resource " + resourcePath
+        );
+    }
 
     private static Path pathFromClassLoad(String resourcePath) {
         try {
             URI resource = Objects.requireNonNull(FilePaths.class.getResource(resourcePath), "Couldn't find resource " + resourcePath).toURI();
-
-            if ("jar".equals(resource.getScheme())) {
-                for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
-                    if (provider.getScheme().equalsIgnoreCase("jar")) {
-                        try {
-                            provider.getFileSystem(resource);
-                        } catch (FileSystemNotFoundException e) {
-                            // the jar file system doesn't exist yet...
-                            // in this case we need to initialize it first:
-                            provider.newFileSystem(resource, Collections.emptyMap());
-                        }
-                    }
-                }
-            }
-
+            checkFileSystem(resource);
             return Paths.get(resource);
         } catch (URISyntaxException | IOException exception) {
             throw new IllegalStateException(exception);
+        }
+    }
+
+    private static void checkFileSystem(URI resource) throws IOException {
+        if (!"jar".equalsIgnoreCase(resource.getScheme())) {
+            return;
+        }
+
+        for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+            if (!provider.getScheme().equalsIgnoreCase("jar")) {
+                continue;
+            }
+
+            try {
+                provider.getFileSystem(resource);
+            } catch (FileSystemNotFoundException e) {
+                // the jar file system doesn't exist yet...
+                // in this case we need to initialize it first:
+                provider.newFileSystem(resource, Collections.emptyMap());
+            }
         }
     }
 }
