@@ -2,6 +2,7 @@ package network.client;
 
 import tech.fastj.logging.Log;
 
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -30,6 +31,11 @@ public class Client implements Runnable {
 
     public Client(ClientConfig clientConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         socket = SecureSocketFactory.getSocket(clientConfig, secureServerConfig);
+
+        SSLParameters parameters = new SSLParameters();
+        parameters.setEndpointIdentificationAlgorithm("HTTPS");
+        socket.setSSLParameters(parameters);
+
         socket.startHandshake();
 
         out = new ObjectOutputStream(socket.getOutputStream());
@@ -40,6 +46,18 @@ public class Client implements Runnable {
             socket.close();
             throw new IOException("Bad connection status: " + connectionStatus);
         }
+    }
+
+    public boolean isConnectionClosed() {
+        return socket.isClosed() || socket.isOutputShutdown();
+    }
+
+    public ObjectInputStream in() {
+        return in;
+    }
+
+    public ObjectOutputStream out() {
+        return out;
     }
 
     public boolean addServerAction(byte identifier, Consumer<Client> action) {
@@ -98,6 +116,10 @@ public class Client implements Runnable {
     }
 
     public void disconnect(byte identifier, String reason) {
+        if (isConnectionClosed()) {
+            return;
+        }
+
         try {
             out.writeByte(identifier);
             out.writeUTF(reason);
@@ -111,7 +133,6 @@ public class Client implements Runnable {
 
     public void shutdown() {
         try {
-            out.flush();
             socket.close();
         } catch (IOException exception) {
             exception.printStackTrace();
@@ -152,13 +173,5 @@ public class Client implements Runnable {
                 break;
             }
         }
-    }
-
-    public ObjectInputStream in() {
-        return in;
-    }
-
-    public ObjectOutputStream out() {
-        return out;
     }
 }
