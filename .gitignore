@@ -51,6 +51,9 @@ hs_err_pid*
 *.jks
 *.cer
 
-# Resource Files/Folders
+# Game Asset Files/Folders
+*.psdf
+*.obj
+*.mtl
 *.ttf
-Noto_Sans/
+game/main/resources/notosans/
