@@ -23,3 +23,7 @@ dependencies.testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')
 dependencies.testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 test.useJUnitPlatform()
+
+compileJava {
+    options.compilerArgs.add('--add-exports=java.base/sun.security.x509=tech.fastj.simplenet')
+}

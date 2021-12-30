@@ -27,7 +27,7 @@ import network.client.Client;
 import objects.Player;
 import scripts.PlayerController;
 import util.FilePaths;
-import util.Networking;
+import core.util.Networking;
 import util.SceneNames;
 
 import static scripts.PlayerController.MovementSpeed;

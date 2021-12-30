@@ -2,6 +2,8 @@ package game;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
+import tech.fastj.graphics.dialog.DialogConfig;
+import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
 import tech.fastj.graphics.display.RenderSettings;
 import tech.fastj.graphics.display.SimpleDisplay;
@@ -16,13 +18,13 @@ import java.awt.GraphicsEnvironment;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
+import core.util.Networking;
 import network.client.Client;
 import network.client.ClientConfig;
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
 import scene.GameScene;
 import util.FilePaths;
-import util.Networking;
 import util.SceneNames;
 
 public class GameManager extends SceneManager {
@@ -36,6 +38,7 @@ public class GameManager extends SceneManager {
 
     @Override
     public void init(FastJCanvas canvas) {
+        FastJEngine.getDisplay().open();
         canvas.setBackgroundColor(Color.lightGray.darker());
         canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
 
@@ -52,10 +55,17 @@ public class GameManager extends SceneManager {
             FastJEngine.error("Couldn't load font file: " + exception.getMessage(), exception);
         }
 
+        String hostname = DialogUtil.showInputDialog(
+                DialogConfig.create().withTitle("Connection Information")
+                        .withPrompt("Please specify the IP address, or host name, of the server you want to connect to.")
+                        .withParentComponent(FastJEngine.getDisplay().getWindow())
+                        .build()
+        );
+
         try {
             Log.info("connecting....");
             client = new Client(
-                    new ClientConfig("fastj.mtest", Networking.Port),
+                    new ClientConfig(hostname, Networking.Port),
                     new SecureServerConfig(
                             FilePaths.PublicGameKey,
                             "sslpublicpassword",

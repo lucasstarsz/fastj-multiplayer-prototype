@@ -1,0 +1,14 @@
+plugins {
+    id 'java'
+}
+
+group('io.github.lucasstarsz')
+version('0.0.1')
+description('Core utilities of a multiplayer game of some sort.')
+
+sourceSets {
+    main.java.srcDirs = ['main/java']
+    main.resources.srcDirs = ['main/resources']
+    test.java.srcDirs = ['test/java']
+    test.resources.srcDirs = ['test/resources']
+}

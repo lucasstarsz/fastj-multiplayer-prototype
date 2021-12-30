@@ -1,4 +1,4 @@
-package game;
+package server;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 import network.server.Server;
 import network.server.ServerClient;
-import util.Networking;
+import core.util.Networking;
 
 public class ServerState {
 

@@ -98,8 +98,7 @@ public class ServerClient {
             } catch (IOException exception) {
                 try {
                     if (in.read() == -1) {
-                        server.removeClient(uuid);
-                        Log.info(this.getClass(), "client {} closed.", uuid);
+                        shutdown();
                         break;
                     }
                 } catch (IOException exception1) {

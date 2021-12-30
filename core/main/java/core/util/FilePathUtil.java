@@ -1,4 +1,4 @@
-package util;
+package core.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,27 +11,18 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Collections;
 import java.util.Objects;
 
-public class FilePaths {
+public class FilePathUtil {
 
-    public static final Path Player = pathFromClassLoad("/player.psdf");
-    public static final Path PlayerArrow = pathFromClassLoad("/playerarrow.psdf");
-    public static final InputStream PublicGameKey = getStreamResource("/clientts.pkcs12");
-    public static final InputStream PrivateGameKey = getStreamResource("/serverks.pkcs12");
-    public static final InputStream NotoSansRegular = getStreamResource("/Noto_Sans/NotoSans-Regular.ttf");
-    public static final InputStream NotoSansBold = getStreamResource("/Noto_Sans/NotoSans-Bold.ttf");
-    public static final InputStream NotoSansBoldItalic = getStreamResource("/Noto_Sans/NotoSans-BoldItalic.ttf");
-    public static final InputStream NotoSansItalic = getStreamResource("/Noto_Sans/NotoSans-Italic.ttf");
-
-    private static InputStream getStreamResource(String resourcePath) {
+    public static InputStream streamResource(Class<?> classToLoadFrom, String resourcePath) {
         return Objects.requireNonNull(
-                FilePaths.class.getResourceAsStream(resourcePath),
+                classToLoadFrom.getResourceAsStream(resourcePath),
                 "Couldn't find resource " + resourcePath
         );
     }
 
-    private static Path pathFromClassLoad(String resourcePath) {
+    public static Path pathFromClassLoad(Class<?> classToLoadFrom, String resourcePath) {
         try {
-            URI resource = Objects.requireNonNull(FilePaths.class.getResource(resourcePath), "Couldn't find resource " + resourcePath).toURI();
+            URI resource = Objects.requireNonNull(classToLoadFrom.getResource(resourcePath), "Couldn't find resource " + resourcePath).toURI();
             checkFileSystem(resource);
             return Paths.get(resource);
         } catch (URISyntaxException | IOException exception) {

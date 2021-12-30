@@ -1,10 +1,11 @@
-package game;
+package server;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.UUID;
 
+import core.util.Networking;
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
 import network.server.ClientDataAction;
@@ -13,7 +14,6 @@ import network.server.ServerClient;
 import network.server.ServerCommand;
 import network.server.ServerConfig;
 import util.FilePaths;
-import util.Networking;
 
 public class GameServer implements Runnable {
 

@@ -1,4 +1,4 @@
-package game;
+package server;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;

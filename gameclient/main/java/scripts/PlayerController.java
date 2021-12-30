@@ -14,7 +14,7 @@ import tech.fastj.systems.behaviors.Behavior;
 import java.io.IOException;
 
 import network.client.Client;
-import util.Networking;
+import core.util.Networking;
 
 public class PlayerController implements Behavior {
 

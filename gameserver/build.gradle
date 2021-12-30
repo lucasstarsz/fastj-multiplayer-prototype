@@ -6,10 +6,10 @@ plugins {
 
 group('io.github.lucasstarsz')
 version('0.0.1')
-description('A multiplayer game of some sort.')
+description('The server for a multiplayer game of some sort.')
 
-application.getMainClass().set('game.ServerMain')
-application.mainModule.set('multiplayer.game')
+application.getMainClass().set('server.ServerMain')
+application.mainModule.set('tech.fastj.multiplayer.server')
 
 sourceSets {
     main.java.srcDirs = ['main/java']
@@ -24,6 +24,7 @@ repositories.mavenCentral()
 dependencies.implementation('com.github.fastjengine:FastJ:1.6.0-SNAPSHOT-3')
 dependencies.implementation('org.slf4j:slf4j-simple:2.0.0-alpha3')
 dependencies.implementation(project(':networking'))
+dependencies.implementation(project(':core'))
 
 
 jlink {
@@ -42,7 +43,7 @@ jlink {
 
     jpackage {
 
-        def iconPath = 'project-resources/fastj_icon'
+        def iconPath = '../project-resources/fastj_icon'
         def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
         installerOptions += [
