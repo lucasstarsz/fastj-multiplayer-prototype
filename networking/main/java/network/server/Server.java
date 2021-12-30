@@ -6,6 +6,7 @@ import javax.net.ssl.SSLServerSocket;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,6 +49,21 @@ public class Server implements Runnable {
     private volatile boolean isRunning;
     private volatile boolean isAcceptingClients;
 
+    public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig, Certificate certificate, String alias) throws IOException, GeneralSecurityException {
+        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig, certificate, alias);
+
+        clients = new LinkedHashMap<>(5, 1.0f, false);
+        clientConnectActions = new ArrayList<>();
+        clientDisconnectActions = new ArrayList<>();
+
+        clientDataActions = new HashMap<>();
+        clientDataActions.put(ClientLeave, clientDisconnectAction);
+        serverCommandActions = new HashMap<>();
+        serverCommandActions.put(StopServer, shutdownCommand);
+        clientAccepter = Executors.newWorkStealingPool();
+        commandInterpreter = Executors.newSingleThreadExecutor();
+    }
+
     public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
 
@@ -59,7 +75,22 @@ public class Server implements Runnable {
         clientDataActions.put(ClientLeave, clientDisconnectAction);
         serverCommandActions = new HashMap<>();
         serverCommandActions.put(StopServer, shutdownCommand);
-        clientAccepter = Executors.newSingleThreadExecutor();
+        clientAccepter = Executors.newWorkStealingPool();
+        commandInterpreter = Executors.newSingleThreadExecutor();
+    }
+
+    public Server(ServerConfig serverConfig) throws IOException {
+        server = SecureServerSocketFactory.getDefault(serverConfig);
+
+        clients = new LinkedHashMap<>(5, 1.0f, false);
+        clientConnectActions = new ArrayList<>();
+        clientDisconnectActions = new ArrayList<>();
+
+        clientDataActions = new HashMap<>();
+        clientDataActions.put(ClientLeave, clientDisconnectAction);
+        serverCommandActions = new HashMap<>();
+        serverCommandActions.put(StopServer, shutdownCommand);
+        clientAccepter = Executors.newWorkStealingPool();
         commandInterpreter = Executors.newSingleThreadExecutor();
     }
 
@@ -133,19 +164,23 @@ public class Server implements Runnable {
         Log.info(this.getClass(), "Stopping server...");
 
         for (ServerClient serverClient : clients.values()) {
-            clients.remove(serverClient.getId(), serverClient);
             serverClient.disconnect(ClientLeave, "Server has stopped.");
         }
+        clients.clear();
+
+        Log.debug(this.getClass(), "All clients removed. Stopping serivces...");
+
+        clientManager.shutdownNow();
+        commandInterpreter.shutdownNow();
+        clientAccepter.shutdownNow();
+
+        Log.debug(this.getClass(), "All services stopped. Closing server socket...");
 
         try {
             server.close();
         } catch (IOException exception) {
             Log.error(this.getClass(), "Exception while closing server", exception);
         }
-
-        clientManager.shutdownNow();
-        commandInterpreter.shutdownNow();
-        clientAccepter.shutdownNow();
         isRunning = false;
 
         Log.info(this.getClass(), "Server stopped.");
@@ -241,6 +276,8 @@ public class Server implements Runnable {
                     .commandAction()
                     .accept(input, getClients());
         }
+
+        Log.debug(this.getClass(), "Command interpreting concluded.");
     }
 
     private void acceptClients() {
@@ -250,7 +287,7 @@ public class Server implements Runnable {
         if (clientManager != null) {
             clientManager.shutdownNow();
         }
-        clientManager = Executors.newCachedThreadPool();
+        clientManager = Executors.newWorkStealingPool();
 
         while (isAcceptingClients) {
             try {
@@ -271,12 +308,12 @@ public class Server implements Runnable {
         clients.put(clientID, serverClient);
         serverClient.out().writeByte(ClientAccepted);
         serverClient.out().flush();
-
         Log.debug("client {} connected.", clientID);
-        clientManager.submit(() -> serverClient.listen(this));
 
         for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientConnectAction : clientConnectActions) {
             clientConnectAction.accept(serverClient, getClients());
         }
+
+        clientManager.submit(() -> serverClient.listen(this));
     }
 }
