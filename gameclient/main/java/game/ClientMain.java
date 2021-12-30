@@ -4,6 +4,7 @@ import tech.fastj.engine.FastJEngine;
 import tech.fastj.engine.config.ExceptionAction;
 import tech.fastj.logging.LogLevel;
 import tech.fastj.graphics.dialog.DialogConfig;
+import tech.fastj.graphics.dialog.DialogMessageTypes;
 import tech.fastj.graphics.dialog.DialogUtil;
 
 import javax.swing.JTextArea;
@@ -20,7 +21,7 @@ public class ClientMain {
         try {
             FastJEngine.init("Game", new GameManager());
             FastJEngine.configureLogging(LogLevel.Debug);
-            FastJEngine.configureExceptionAction(ExceptionAction.Throw);
+            FastJEngine.configureExceptionAction(ExceptionAction.LogError);
             FastJEngine.run();
         } catch (Exception exception) {
             if (FastJEngine.isRunning()) {
@@ -50,7 +51,7 @@ public class ClientMain {
         JTextArea textArea = new JTextArea(formattedException.toString());
         textArea.setBackground(new Color(238, 238, 238));
         textArea.setEditable(false);
-        textArea.setFont(Fonts.notoSans(Font.BOLD, 13));
+        textArea.setFont(Fonts.notoSansMono(Font.BOLD, 13));
 
         DialogConfig exceptionConfig = DialogConfig.create()
                 .withParentComponent(null)
@@ -67,7 +68,33 @@ public class ClientMain {
                 .toString()
                 .replaceFirst("\\[", "")
                 .replaceAll("](.*)\\[", "")
-                .replaceAll("(, )?at", "    at")
-                .replace("]", "");
+                .replaceAll("(, )?at ", "    at ")
+                .replace("]", "")
+                .trim();
+    }
+
+    public static boolean chooseExit() {
+        String[] options = {
+                "Yes",
+                "No",
+                "Cancel"
+        };
+        int chosenOption = DialogUtil.showOptionDialog(
+                DialogConfig.create().withTitle("Exit?")
+                        .withPrompt(
+                                "You closed out the hostname-selection screen. Are you sure you want to exit?" +
+                                        "\nClick \"Yes\" or the X button to exit." +
+                                        "\nClick \"No\" or \"Cancel\" to return to the hostname-selection screen."
+                        )
+                        .build(),
+                DialogMessageTypes.Warning,
+                options,
+                options[2]
+        );
+
+        return switch (chosenOption) {
+            case 0, -1 -> true;
+            default -> false;
+        };
     }
 }

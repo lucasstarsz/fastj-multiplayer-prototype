@@ -38,7 +38,7 @@ jlink {
 
     launcher {
         name = project.name
-        noConsole = true
+        noConsole = false
     }
 
     jpackage {
