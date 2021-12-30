@@ -96,8 +96,21 @@ public class SecureUtil {
      * <p>
      * See: <a href="https://stackoverflow.com/questions/1615871/creating-an-x509-certificate-in-java-without-bouncycastle/5488964#5488964"
      * target="_blank">This amazing StackOverflow post</a>.
+     * <p>
+     * Example Usage:
+     * <pre>{@code
+     * KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+     * KeyPair keyPair = keyPairGenerator.generateKeyPair();
+     * Certificate certificate = SecureUtil.generateCertificate(
+     *        "CN=hostname, OU=orgunitname, O=orgname, L=city, ST=state, C=stateId",
+     *        keyPair,
+     *        365,
+     *        "SHA256withRSA"
+     * );
+     * }</pre>
      *
-     * @param distinguishedName  the X.509 Distinguished Name, eg "CN=Test, L=London, C=GB"
+     * @param distinguishedName  the X.509 Distinguished Name, eg "CN=hostname, OU=orgunit, O=organization, L=city,
+     *                           ST=state, C=stateIdentifier".
      * @param keyPair            the KeyPair to get public/private keys from.
      * @param days               how many days from now the certificate is valid for.
      * @param signatureAlgorithm the signing algorithm, eg "SHA1withRSA"
