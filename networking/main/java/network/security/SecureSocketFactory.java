@@ -13,14 +13,22 @@ public class SecureSocketFactory {
 
     private static final String Instance = "JKS";
 
+    public static SSLSocket getDefault(ClientConfig clientConfig) throws IOException {
+        SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        return (SSLSocket) sslSocketFactory.createSocket(clientConfig.host(), clientConfig.port());
+    }
+
     public static SSLSocket getSocket(ClientConfig clientConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
         SSLContext sslContext = SecureUtil.generateSSLContext(secureServerConfig, Instance);
-
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-        return (SSLSocket) socketFactory.createSocket(
-                clientConfig.host(),
-                clientConfig.port()
-        );
+
+        return (SSLSocket) socketFactory.createSocket(clientConfig.host(), clientConfig.port());
+    }
+
+    public static SSLSocket getSocket(ClientConfig clientConfig, SSLContext sslContext) throws IOException {
+        SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+
+        return (SSLSocket) socketFactory.createSocket(clientConfig.host(), clientConfig.port());
     }
 }
 
