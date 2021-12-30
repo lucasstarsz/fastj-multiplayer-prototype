@@ -61,6 +61,10 @@ public class ServerClient {
     }
 
     public void disconnect(byte identifier, String reason) {
+        if (isConnectionClosed()) {
+            return;
+        }
+
         try {
             out.writeByte(identifier);
             out.writeUTF(reason);
@@ -78,11 +82,12 @@ public class ServerClient {
         }
 
         try {
-            out.flush();
             socket.close();
         } catch (IOException exception) {
             exception.printStackTrace();
         }
+
+        Log.info(this.getClass(), "client {} closed.", uuid);
     }
 
     synchronized void listen(Server server) {
@@ -94,7 +99,7 @@ public class ServerClient {
                 try {
                     if (in.read() == -1) {
                         server.removeClient(uuid);
-                        Log.info(ServerClient.class, "client {} closed.", uuid);
+                        Log.info(this.getClass(), "client {} closed.", uuid);
                         break;
                     }
                 } catch (IOException exception1) {
@@ -104,6 +109,10 @@ public class ServerClient {
                 break;
             }
         }
+    }
+
+    public boolean isConnectionClosed() {
+        return socket.isClosed() || socket.isOutputShutdown();
     }
 
     public ObjectInputStream in() {
