@@ -15,8 +15,8 @@ public class FilePaths {
 
     public static final Path Player = pathFromClassLoad("/player.psdf");
     public static final Path PlayerArrow = pathFromClassLoad("/playerarrow.psdf");
-    public static final InputStream PublicGameKey = getStreamResource("/clienttruststore.pkcs12");
-    public static final InputStream PrivateGameKey = getStreamResource("/serverkeystore.pkcs12");
+    public static final InputStream PublicGameKey = getStreamResource("/clientts.pkcs12");
+    public static final InputStream PrivateGameKey = getStreamResource("/serverks.pkcs12");
     public static final InputStream NotoSansRegular = getStreamResource("/Noto_Sans/NotoSans-Regular.ttf");
     public static final InputStream NotoSansBold = getStreamResource("/Noto_Sans/NotoSans-Bold.ttf");
     public static final InputStream NotoSansBoldItalic = getStreamResource("/Noto_Sans/NotoSans-BoldItalic.ttf");

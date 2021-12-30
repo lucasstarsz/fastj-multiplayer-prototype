@@ -4,6 +4,8 @@ import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
 import tech.fastj.math.Pointf;
 import tech.fastj.math.Transform2D;
+import tech.fastj.graphics.dialog.DialogConfig;
+import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
 import tech.fastj.graphics.game.Model2D;
 import tech.fastj.graphics.game.Polygon2D;
@@ -57,7 +59,7 @@ public class GameScene extends Scene {
         PlayerController playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
         player.addBehavior(playerController, this);
         drawableManager.addGameObject(player);
-        transformSync = Executors.newSingleThreadScheduledExecutor();
+        transformSync = Executors.newScheduledThreadPool(1);
         transformSync.scheduleWithFixedDelay(this::sendTransformSync, 1, 1, TimeUnit.SECONDS);
     }
 
@@ -72,8 +74,18 @@ public class GameScene extends Scene {
                     player.getRotation()
             );
         } catch (IOException exception) {
-            client.shutdown();
-            Log.error(GameScene.class, "couldn't sync transform, disconnecting client", exception);
+            if (client.isConnectionClosed()) {
+                DialogUtil.showMessageDialog(
+                        DialogConfig.create()
+                                .withParentComponent(FastJEngine.getDisplay().getWindow())
+                                .withPrompt("Server connection closed. Session ended.")
+                                .build()
+                );
+            } else {
+                Log.error(GameScene.class, "couldn't sync transform, disconnecting client", exception);
+                client.shutdown();
+            }
+            FastJEngine.closeGame();
         }
     }
 

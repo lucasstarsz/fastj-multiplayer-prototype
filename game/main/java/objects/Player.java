@@ -12,6 +12,7 @@ import tech.fastj.resources.models.ModelUtil;
 import tech.fastj.systems.control.Scene;
 import tech.fastj.systems.control.SimpleManager;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 
@@ -38,7 +39,7 @@ public class Player extends GameObject {
                 .build();
 
         Polygon2D[] directionalArrowMesh = ModelUtil.loadModel(FilePaths.PlayerArrow);
-        directionalArrowMesh[0].setFill(playerModel.getPolygons()[0].getFill());
+        directionalArrowMesh[0].setFill(((Color) playerModel.getPolygons()[0].getFill()).brighter().brighter().brighter());
         this.directionalArrow = Model2D.fromPolygons(directionalArrowMesh);
 
         super.setCollisionPath(this.playerModel.getCollisionPath());

@@ -2,6 +2,7 @@ package game;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.engine.config.ExceptionAction;
+import tech.fastj.logging.LogLevel;
 import tech.fastj.graphics.dialog.DialogConfig;
 import tech.fastj.graphics.dialog.DialogUtil;
 
@@ -13,6 +14,7 @@ public class ClientMain {
     public static void main(String[] args) {
         try {
             FastJEngine.init("Game", new GameManager());
+            FastJEngine.configureLogging(LogLevel.Debug);
             FastJEngine.configureExceptionAction(ExceptionAction.Throw);
             FastJEngine.run();
         } catch (Exception exception) {

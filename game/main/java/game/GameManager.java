@@ -20,7 +20,6 @@ import network.client.Client;
 import network.client.ClientConfig;
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
-import network.server.Server;
 import scene.GameScene;
 import util.FilePaths;
 import util.Networking;
@@ -38,13 +37,13 @@ public class GameManager extends SceneManager {
     @Override
     public void init(FastJCanvas canvas) {
         canvas.setBackgroundColor(Color.lightGray.darker());
-        canvas.modifyRenderSettings(RenderSettings.TextAntialiasing.Enable);
+        canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
 
         try {
-            Font notoSansRegular = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansRegularPath);
-            Font notoSansBold = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBoldPath);
-            Font notoSansBoldItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBoldItalicPath);
-            Font notoSansItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansItalicPath);
+            Font notoSansRegular = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansRegular);
+            Font notoSansBold = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBold);
+            Font notoSansBoldItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansBoldItalic);
+            Font notoSansItalic = Font.createFont(Font.TRUETYPE_FONT, FilePaths.NotoSansItalic);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansRegular);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansBold);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(notoSansBoldItalic);
@@ -56,9 +55,9 @@ public class GameManager extends SceneManager {
         try {
             Log.info("connecting....");
             client = new Client(
-                    new ClientConfig("localhost", Networking.Port),
+                    new ClientConfig("fastj.mtest", Networking.Port),
                     new SecureServerConfig(
-                            FilePaths.PublicGameKeyPath,
+                            FilePaths.PublicGameKey,
                             "sslpublicpassword",
                             SecureTypes.TLSv1_3
                     )
@@ -140,8 +139,8 @@ public class GameManager extends SceneManager {
     @Override
     public void reset() {
         super.reset();
-        if (client != null) {
-            client.disconnect(Server.ClientLeave, "Session ended.");
+        if (client != null && !client.isConnectionClosed()) {
+            client.shutdown();
         }
     }
 }

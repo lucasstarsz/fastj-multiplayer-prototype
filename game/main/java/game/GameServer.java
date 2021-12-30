@@ -23,8 +23,8 @@ public class GameServer implements Runnable {
     public GameServer() throws IOException, GeneralSecurityException {
         ServerConfig serverConfig = new ServerConfig(Networking.Port);
         SecureServerConfig secureServerConfig = new SecureServerConfig(
-                FilePaths.PrivateGameKeyPath,
-                "sslpassword",
+                FilePaths.PrivateGameKey,
+                "sslprivatepassword",
                 SecureTypes.TLSv1_3
         );
 
