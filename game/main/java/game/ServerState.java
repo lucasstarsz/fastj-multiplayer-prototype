@@ -80,7 +80,7 @@ public class ServerState {
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
-            Log.info(GameServer.class, "player {} pressed {}", player, key);
+            Log.trace(GameServer.class, "player {} pressed {}", player, key);
 
             String keyPressed = key;
             for (ServerClient serverClient : allClients.values()) {
@@ -108,7 +108,7 @@ public class ServerState {
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
-            Log.info(GameServer.class, "player {} released {}", player, key);
+            Log.trace(GameServer.class, "player {} released {}", player, key);
 
             String keyReleased = key;
             for (ServerClient serverClient : allClients.values()) {
@@ -141,7 +141,7 @@ public class ServerState {
             float translationY = currentClient.in().readFloat();
             float rotation = currentClient.in().readFloat();
 
-            Log.info(
+            Log.trace(
                     GameServer.class,
                     "Syncing player {} to {} {} {}",
                     syncPlayerNumber,
