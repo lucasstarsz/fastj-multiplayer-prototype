@@ -2,7 +2,6 @@ package scenes;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
-import tech.fastj.math.Pointf;
 import tech.fastj.math.Transform2D;
 import tech.fastj.graphics.dialog.DialogConfig;
 import tech.fastj.graphics.dialog.DialogOptions;
@@ -15,12 +14,12 @@ import tech.fastj.graphics.ui.elements.Button;
 import tech.fastj.systems.control.Scene;
 
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Font;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -37,15 +36,11 @@ import util.Colors;
 import util.FilePaths;
 import util.Fonts;
 import util.SceneNames;
+import util.Sizes;
 
 public class MainMenu extends Scene {
 
-    private static final Pointf ButtonSize = new Pointf(300f, 70f);
-    private static final Font ButtonTextFont = Fonts.notoSans(Font.PLAIN, 24);
-    private static final Font TitleTextFont = Fonts.notoSans(Font.BOLD, 64);
-
-    private Button joinMultiplayerButton;
-    private Button exitGameButton;
+    private Button joinMultiplayerButton, settingsButton, exitGameButton;
     private Text2D title;
 
     public MainMenu() {
@@ -54,10 +49,10 @@ public class MainMenu extends Scene {
 
     @Override
     public void load(FastJCanvas canvas) {
-        joinMultiplayerButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 2.5f), ButtonSize);
+        joinMultiplayerButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 3.625f), Sizes.ButtonSize);
         joinMultiplayerButton.setFill(Colors.Snowy);
         joinMultiplayerButton.setText("Join Multiplayer Lobby");
-        joinMultiplayerButton.setFont(ButtonTextFont);
+        joinMultiplayerButton.setFont(Fonts.ButtonTextFont);
         joinMultiplayerButton.translate(joinMultiplayerButton.getCenter().subtract(joinMultiplayerButton.getTranslation()).multiply(-1f));
         joinMultiplayerButton.addOnAction(mouseButtonEvent -> SwingUtilities.invokeLater(() -> {
             String hostname;
@@ -65,6 +60,7 @@ public class MainMenu extends Scene {
                 hostname = DialogUtil.showInputDialog(
                         DialogConfig.create().withTitle("Connection Information")
                                 .withPrompt("Please specify the IP address, or host name, of the server you want to connect to.")
+                                .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
                                 .build()
                 );
 
@@ -81,7 +77,7 @@ public class MainMenu extends Scene {
                         .withPrompt("Connecting to " + hostname + "...")
                         .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
                         .build();
-                connectingDialog = new JDialog(FastJEngine.<SimpleDisplay>getDisplay().getWindow(), connectingConfig.title(), false);
+                connectingDialog = new JDialog((JFrame) connectingConfig.dialogParent(), connectingConfig.title(), false);
                 connectingDialog.setAlwaysOnTop(true);
 
                 BorderLayout layout = new BorderLayout();
@@ -94,6 +90,7 @@ public class MainMenu extends Scene {
 
                 connectingDialog.setContentPane(container);
                 connectingDialog.pack();
+                connectingDialog.setLocationRelativeTo(connectingConfig.dialogParent());
                 connectingDialog.setVisible(true);
 
                 FastJEngine.<GameManager>getLogicManager().setClient(new Client(
@@ -156,10 +153,22 @@ public class MainMenu extends Scene {
         }));
         drawableManager.addUIElement(joinMultiplayerButton);
 
-        exitGameButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.5f), ButtonSize);
+        settingsButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 2.0f), Sizes.ButtonSize);
+        settingsButton.setFill(Colors.Snowy);
+        settingsButton.setText("Settings");
+        settingsButton.setFont(Fonts.ButtonTextFont);
+        settingsButton.translate(settingsButton.getCenter().subtract(settingsButton.getTranslation()).multiply(-1f));
+        settingsButton.addOnAction(mouseButtonEvent -> FastJEngine.runAfterUpdate(() -> {
+            GameManager gameManager = FastJEngine.getLogicManager();
+            gameManager.getCurrentScene().unload(canvas);
+            gameManager.switchScenes(SceneNames.Settings);
+        }));
+        drawableManager.addUIElement(settingsButton);
+
+        exitGameButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.375f), Sizes.ButtonSize);
         exitGameButton.setFill(Colors.Snowy);
         exitGameButton.setText("Exit Game");
-        exitGameButton.setFont(ButtonTextFont);
+        exitGameButton.setFont(Fonts.ButtonTextFont);
         exitGameButton.translate(exitGameButton.getCenter().subtract(exitGameButton.getTranslation()).multiply(-1f));
         exitGameButton.addOnAction(mouseButtonEvent -> SwingUtilities.invokeLater(() -> {
             DialogConfig confirmExitConfig = DialogConfig.create()
@@ -173,18 +182,18 @@ public class MainMenu extends Scene {
         }));
 
         title = Text2D.create("Snowball Fight WIP")
-                .withFont(TitleTextFont)
+                .withFont(Fonts.TitleTextFont)
                 .withFill(Color.black)
                 .withTransform(canvas.getCanvasCenter().subtract(0f, canvas.getCanvasCenter().y / 2f), Transform2D.DefaultRotation, Transform2D.DefaultScale)
                 .build();
         title.translate(title.getCenter().subtract(title.getTranslation()).multiply(-1f));
-        Log.info(title.toString());
         drawableManager.addGameObject(title);
     }
 
     @Override
     public void unload(FastJCanvas canvas) {
         joinMultiplayerButton = null;
+        settingsButton = null;
         exitGameButton = null;
         title = null;
     }

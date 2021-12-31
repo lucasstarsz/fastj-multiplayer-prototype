@@ -56,4 +56,5 @@ hs_err_pid*
 *.obj
 *.mtl
 *.ttf
+*.wav
 game/main/resources/notosans/

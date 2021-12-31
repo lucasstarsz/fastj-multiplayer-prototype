@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,6 +29,10 @@ public class FilePathUtil {
         } catch (URISyntaxException | IOException exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    public static URL urlFromClassLoad(Class<?> classToLoadFrom, String resourcePath) {
+        return Objects.requireNonNull(classToLoadFrom.getResource(resourcePath), "Couldn't find resource " + resourcePath);
     }
 
     private static void checkFileSystem(URI resource) throws IOException {

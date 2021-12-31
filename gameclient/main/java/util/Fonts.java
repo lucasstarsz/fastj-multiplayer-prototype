@@ -13,6 +13,8 @@ import game.ClientMain;
 public class Fonts {
 
     public static final Font DefaultNotoSans = Fonts.notoSans(Font.BOLD, 16);
+    public static final Font ButtonTextFont = Fonts.notoSans(Font.PLAIN, 24);
+    public static final Font TitleTextFont = Fonts.notoSans(Font.BOLD, 64);
 
     public static Font notoSans(int style, int size) {
         return new Font("Noto Sans", style, size);

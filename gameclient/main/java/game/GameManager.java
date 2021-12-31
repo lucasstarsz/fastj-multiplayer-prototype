@@ -19,6 +19,7 @@ import core.util.Networking;
 import network.client.Client;
 import scenes.GameScene;
 import scenes.MainMenu;
+import scenes.Settings;
 import util.Colors;
 import util.SceneNames;
 
@@ -27,6 +28,8 @@ public class GameManager extends SceneManager {
     private Client client;
     private GameScene gameScene;
     private MainMenu mainMenu;
+    private Settings settings;
+    private MusicManager musicManager;
 
     public Client getClient() {
         return client;
@@ -37,12 +40,18 @@ public class GameManager extends SceneManager {
         canvas.setBackgroundColor(Colors.Snowy.darker());
         canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
 
+        musicManager = new MusicManager(MusicManager.InitialAudioLevel);
+
         mainMenu = new MainMenu();
+        settings = new Settings();
         gameScene = new GameScene();
         addScene(mainMenu);
+        addScene(settings);
         addScene(gameScene);
         setCurrentScene(SceneNames.MainMenu);
         loadCurrentScene();
+
+        musicManager.playMainMusic();
     }
 
     @Override
@@ -59,6 +68,14 @@ public class GameManager extends SceneManager {
         if (client != null && !client.isConnectionClosed()) {
             client.shutdown();
         }
+        if (musicManager != null) {
+            musicManager.pauseMainMusic();
+            musicManager.unloadAll();
+        }
+    }
+
+    public MusicManager getMusicManager() {
+        return musicManager;
     }
 
     public void setClient(Client client) {

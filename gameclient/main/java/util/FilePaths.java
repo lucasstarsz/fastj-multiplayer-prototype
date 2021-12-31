@@ -1,6 +1,7 @@
 package util;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -11,6 +12,7 @@ public class FilePaths {
     public static final Path PlayerArrow = FilePathUtil.pathFromClassLoad(FilePaths.class, "/playerarrow.psdf");
     public static final Path Snowball = FilePathUtil.pathFromClassLoad(FilePaths.class, "/snowball.psdf");
     public static final Path HealthBar = FilePathUtil.pathFromClassLoad(FilePaths.class, "/healthbar.psdf");
+    public static final URL Trailblaze = FilePathUtil.urlFromClassLoad(FilePaths.class, "/Trailblaze 0_10.wav");
     public static final InputStream PublicGameKey = FilePathUtil.streamResource(FilePaths.class, "/clientts.pkcs12");
 
     public static final InputStream NotoSansRegular = streamResourceFromFolder("/notosans/NotoSans-Regular.ttf");
