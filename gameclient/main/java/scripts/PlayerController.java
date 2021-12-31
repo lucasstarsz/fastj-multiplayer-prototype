@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import core.util.Networking;
 import network.client.Client;
+import objects.Player;
 
 public class PlayerController implements Behavior {
 
@@ -147,7 +148,7 @@ public class PlayerController implements Behavior {
         }
     }
 
-    public static boolean transformPlayer(Pointf movement, float rotation, GameObject player) {
+    public static boolean transformPlayer(Pointf movement, float rotation, Player player) {
         if (!movement.equals(Pointf.origin()) || rotation != 0f) {
             Pointf rotatedMovement = new Pointf(movement).rotate(-(player.getRotationWithin360() + rotation));
             player.rotate(rotation);
@@ -161,7 +162,7 @@ public class PlayerController implements Behavior {
 
     @Override
     public void update(GameObject player) {
-        if (transformPlayer(movement, rotation, player)) {
+        if (transformPlayer(movement, rotation, (Player) player)) {
             playerObserver.run();
         }
     }

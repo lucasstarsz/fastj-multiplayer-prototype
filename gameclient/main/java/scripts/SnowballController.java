@@ -58,6 +58,10 @@ public class SnowballController implements Behavior {
                             return;
                         }
 
+                        if (snowballCount < 1) {
+                            Log.debug("player {} doesn't have any snowballs to throw!", player.getPlayerNumber());
+                        }
+
                         FastJEngine.runAfterUpdate(() -> {
                             try {
                                 float playerRotation = player.getRotationWithin360();
@@ -115,10 +119,8 @@ public class SnowballController implements Behavior {
         Log.debug(GameScene.class, "player {} created a snowball.", player.getPlayerNumber());
     }
 
-
     @Override
     public void update(GameObject gameObject) {
-
     }
 
     @Override

@@ -22,6 +22,7 @@ public class Player extends GameObject {
     private final Model2D directionalArrow;
     private final Text2D playerIndicator;
     private final int playerNumber;
+    private final boolean isLocalPlayer;
     private PlayerState playerState;
 
     public Player(Polygon2D[] playerPolygons, int playerNumber, boolean isLocalPlayer) {
@@ -38,6 +39,7 @@ public class Player extends GameObject {
         this.directionalArrow = Model2D.fromPolygons(directionalArrowMesh);
 
         super.setCollisionPath(playerModel.getCollisionPath());
+        this.isLocalPlayer = isLocalPlayer;
     }
 
     @Override
@@ -70,6 +72,10 @@ public class Player extends GameObject {
 
     public int getPlayerNumber() {
         return playerNumber;
+    }
+
+    public boolean isLocalPlayer() {
+        return isLocalPlayer;
     }
 
     public static class PlayerState {
