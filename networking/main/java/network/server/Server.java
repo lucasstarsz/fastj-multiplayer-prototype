@@ -308,7 +308,7 @@ public class Server implements Runnable {
         clients.put(clientID, serverClient);
         serverClient.out().writeByte(ClientAccepted);
         serverClient.out().flush();
-        Log.debug("client {} connected.", clientID);
+        Log.debug(this.getClass(), "client {} connected.", clientID);
 
         for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientConnectAction : clientConnectActions) {
             clientConnectAction.accept(serverClient, getClients());
