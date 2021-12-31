@@ -40,7 +40,7 @@ public class ServerState {
                 if (serverClient == addedClient) {
                     continue;
                 }
-                Log.info(this.getClass(), "sending player {} to {}", playerNumber, serverClient);
+                Log.info(this.getClass(), "sending player {} to {}", playerNumber, serverClient.getId());
 
                 try {
                     serverClient.send(Networking.Client.AddPlayer, playerNumber);
@@ -52,13 +52,13 @@ public class ServerState {
             }
 
             // add other clients to new player
-            for (Map.Entry<Integer, ServerClient> player : players.entrySet()) {
+            for (Map.Entry<UUID, ServerClient> player : server.getClients().entrySet()) {
                 if (player.getValue() == addedClient) {
                     continue;
                 }
 
                 try {
-                    addedClient.send(Networking.Client.AddPlayer, player.getKey());
+                    addedClient.send(Networking.Client.AddPlayer, idToPlayers.get(player.getKey()));
                 } catch (IOException exception) {
                     if (tryRemoveClosedClient(addedClient)) {
                         Log.error(this.getClass(), "Server IO error", exception);
@@ -202,7 +202,10 @@ public class ServerState {
     public boolean tryRemoveClosedClient(ServerClient... serverClients) {
         boolean removedClosedClient = false;
         for (ServerClient serverClient : serverClients) {
-            if (serverClient.isConnectionClosed()) {
+            if (!server.getClients().containsValue(serverClient)) {
+                serverClient.shutdown();
+                removedClosedClient = true;
+            } else if (serverClient.isConnectionClosed()) {
                 server.removeClient(serverClient.getId());
                 removedClosedClient = true;
             }
