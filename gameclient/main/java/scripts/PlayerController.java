@@ -2,6 +2,7 @@ package scripts;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
+import tech.fastj.math.Maths;
 import tech.fastj.math.Pointf;
 import tech.fastj.graphics.game.GameObject;
 
@@ -13,6 +14,7 @@ import tech.fastj.input.mouse.MouseActionListener;
 import tech.fastj.systems.behaviors.Behavior;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import core.util.Networking;
 import network.client.Client;
@@ -194,5 +196,29 @@ public class PlayerController implements Behavior {
         if (rotation == -RotationSpeed) {
             keyRelease(Keys.A);
         }
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || getClass() != other.getClass()) {
+            return false;
+        }
+        PlayerController playerController = (PlayerController) other;
+        return playerNumber == playerController.playerNumber
+                && Maths.floatEquals(playerController.rotation, rotation)
+                && inputManager.equals(playerController.inputManager)
+                && playerObserver.equals(playerController.playerObserver)
+                && client.equals(playerController.client)
+                && Objects.equals(keyListener, playerController.keyListener)
+                && Objects.equals(mouseListener, playerController.mouseListener)
+                && Objects.equals(movement, playerController.movement);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(inputManager, playerObserver, playerNumber, client, keyListener, mouseListener, movement, rotation);
     }
 }

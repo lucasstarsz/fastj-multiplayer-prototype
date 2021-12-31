@@ -40,6 +40,7 @@ public class GameServer implements Runnable {
         server.addClientAction(new ClientDataAction(Networking.Server.KeyPress, serverState::handleKeyPress));
         server.addClientAction(new ClientDataAction(Networking.Server.KeyRelease, serverState::handleKeyRelease));
         server.addClientAction(new ClientDataAction(Networking.Server.SyncTransform, serverState::syncPlayerTransform));
+        server.addClientAction(new ClientDataAction(Networking.Server.CreateSnowball, serverState::createSnowball));
     }
 
     private void toggleClientConnect(String s, Map<UUID, ServerClient> uuidServerClientMap) {

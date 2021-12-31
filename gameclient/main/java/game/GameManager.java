@@ -2,6 +2,7 @@ package game;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
+import tech.fastj.math.Pointf;
 import tech.fastj.graphics.dialog.DialogConfig;
 import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
@@ -87,7 +88,7 @@ public class GameManager extends SceneManager {
                     FastJEngine.closeGame();
                 }
             });
-            client.addServerAction(Networking.Client.SyncPlayerTransform, client -> {
+            client.addServerAction(Networking.Client.PlayerSyncTransform, client -> {
                 try {
                     int syncPlayerNumber = client.in().readInt();
                     float translationX = client.in().readFloat();
@@ -130,6 +131,20 @@ public class GameManager extends SceneManager {
                     Log.warn(GameManager.class, "Invalid identifier release {} from player {}", key, playerNumber);
                 }
             });
+            client.addServerAction(Networking.Client.PlayerCreateSnowball, client -> {
+                try {
+                    int player = client.in().readInt();
+                    float trajectoryX = client.in().readFloat();
+                    float trajectoryY = client.in().readFloat();
+                    float rotation = client.in().readFloat();
+                    Pointf trajectory = new Pointf(trajectoryX, trajectoryY);
+                    Log.debug(GameManager.class, "player {} spawned a snowball headed to {} with rotation {}", player, trajectory, rotation);
+                    gameScene.spawnSnowball(player, trajectory, rotation);
+                } catch (IOException exception) {
+                    ClientMain.displayException("Couldn't receive PlayerKeyRelease data", exception);
+                    FastJEngine.closeGame();
+                }
+            });
 
             gameScene = new GameScene(playerNumber);
             addScene(gameScene);
@@ -139,6 +154,14 @@ public class GameManager extends SceneManager {
         } catch (IOException | GeneralSecurityException exception) {
             ClientMain.displayException("IO/Certificate Configuration error", exception);
             FastJEngine.forceCloseGame();
+        }
+    }
+
+    @Override
+    public void update(FastJCanvas canvas) {
+        super.update(canvas);
+        if (client.isConnectionClosed()) {
+            FastJEngine.runAfterUpdate(FastJEngine::closeGame);
         }
     }
 

@@ -7,7 +7,6 @@ import tech.fastj.math.Transform2D;
 import tech.fastj.graphics.dialog.DialogConfig;
 import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
-import tech.fastj.graphics.game.Model2D;
 import tech.fastj.graphics.game.Polygon2D;
 import tech.fastj.graphics.util.DrawUtil;
 
@@ -28,9 +27,12 @@ import core.util.Networking;
 import game.GameManager;
 import network.client.Client;
 import objects.Player;
+import objects.Snowball;
 import scripts.PlayerController;
+import scripts.SnowballController;
 import util.FilePaths;
 import util.SceneNames;
+import util.Tags;
 
 import static scripts.PlayerController.MovementSpeed;
 import static scripts.PlayerController.RotationSpeed;
@@ -39,33 +41,32 @@ public class GameScene extends Scene implements FocusListener {
 
     private Player player;
     private PlayerController playerController;
-    private int playerNumber;
+    private SnowballController snowballController;
+    private int localPlayerNumber;
     private Pointf canvasCenter;
 
     private final Map<Integer, Player> otherPlayers = new HashMap<>();
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
     private ScheduledExecutorService transformSync;
 
-    public GameScene(int playerNumber) {
+    public GameScene(int localPlayerNumber) {
         super(SceneNames.GameScene);
-        this.playerNumber = playerNumber;
+        this.localPlayerNumber = localPlayerNumber;
     }
 
     @Override
     public void load(FastJCanvas canvas) {
+        canvas.getRawCanvas().addFocusListener(this);
         canvasCenter = canvas.getCanvasCenter();
 
         Client client = FastJEngine.<GameManager>getLogicManager().getClient();
-        player = new Player(
-                Model2D.fromPolygons(ModelUtil.loadModel(FilePaths.Player)),
-                playerNumber,
-                true
-        );
+        player = new Player(ModelUtil.loadModel(FilePaths.Player), localPlayerNumber, true);
         player.translate(canvasCenter);
 
-        playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
-        canvas.getRawCanvas().addFocusListener(this);
+        playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, localPlayerNumber);
         player.addBehavior(playerController, this);
+        snowballController = new SnowballController(this, client);
+        player.addBehavior(snowballController, this);
         drawableManager.addGameObject(player);
 
         transformSync = Executors.newScheduledThreadPool(1);
@@ -77,7 +78,7 @@ public class GameScene extends Scene implements FocusListener {
         try {
             client.send(
                     Networking.Server.SyncTransform,
-                    playerNumber,
+                    localPlayerNumber,
                     player.getTranslation().x,
                     player.getTranslation().y,
                     player.getRotation()
@@ -107,7 +108,7 @@ public class GameScene extends Scene implements FocusListener {
     @Override
     public void unload(FastJCanvas canvas) {
         player = null;
-        playerNumber = 0;
+        localPlayerNumber = 0;
         otherPlayers.clear();
 
         if (transformSync != null) {
@@ -143,11 +144,8 @@ public class GameScene extends Scene implements FocusListener {
         Polygon2D[] playerModel = ModelUtil.loadModel(FilePaths.Player);
         playerModel[0].setFill(DrawUtil.randomColor());
 
-        Player newPlayer = new Player(
-                Model2D.fromPolygons(playerModel),
-                newPlayerNumber,
-                false
-        );
+        Player newPlayer = new Player(playerModel, newPlayerNumber, false);
+        newPlayer.addTag(Tags.Enemy, this);
         newPlayer.translate(canvasCenter);
         drawableManager.addGameObject(newPlayer);
         otherPlayers.put(newPlayerNumber, newPlayer);
@@ -190,5 +188,27 @@ public class GameScene extends Scene implements FocusListener {
     public void focusLost(FocusEvent focusEvent) {
         Log.info(PlayerController.class, "Focus lost. Releasing all keys.");
         playerController.resetMovement();
+    }
+
+    public int getLocalPlayerNumber() {
+        return localPlayerNumber;
+    }
+
+    public void spawnSnowball(int otherPlayerNumber, Pointf trajectory, float rotation) {
+        Player otherPlayer = otherPlayers.get(otherPlayerNumber);
+        if (otherPlayer == null) {
+            Log.info("Didn't find player {}", otherPlayerNumber);
+            return;
+        }
+
+        spawnSnowball(otherPlayer, trajectory, rotation);
+    }
+
+    public void spawnSnowball(Player player, Pointf trajectory, float rotation) {
+        Snowball snowball = new Snowball(trajectory, rotation, player, this);
+        snowball.addBehavior(snowball, this);
+        this.addBehaviorListener(snowball);
+        snowball.init(player);
+        drawableManager.addGameObject(snowball);
     }
 }

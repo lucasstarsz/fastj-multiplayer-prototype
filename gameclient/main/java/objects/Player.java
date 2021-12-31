@@ -10,7 +10,6 @@ import tech.fastj.resources.models.ModelUtil;
 import tech.fastj.systems.control.Scene;
 import tech.fastj.systems.control.SimpleManager;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 
@@ -22,19 +21,23 @@ public class Player extends GameObject {
     private final Model2D playerModel;
     private final Model2D directionalArrow;
     private final Text2D playerIndicator;
+    private final int playerNumber;
+    private PlayerState playerState;
 
-    public Player(Model2D playerModel, int playerNumber, boolean isLocalPlayer) {
-        this.playerModel = playerModel;
+    public Player(Polygon2D[] playerPolygons, int playerNumber, boolean isLocalPlayer) {
+        this.playerModel = Model2D.fromPolygons(playerPolygons);
+        this.playerNumber = playerNumber;
         this.playerIndicator = Text2D.create(isLocalPlayer ? "You" : "P" + playerNumber)
                 .withFont(Fonts.DefaultNotoSans)
                 .build();
-        playerIndicator.translate(new Pointf(25f).subtract(playerIndicator.getCenter()));
+        Pointf playerIndicatorTranslation = new Pointf(25f).subtract(playerIndicator.getCenter());
+        this.playerIndicator.translate(playerIndicatorTranslation);
 
         Polygon2D[] directionalArrowMesh = ModelUtil.loadModel(FilePaths.PlayerArrow);
-        directionalArrowMesh[0].setFill(((Color) playerModel.getPolygons()[0].getFill()).brighter().brighter().brighter());
+        directionalArrowMesh[0].setFill(playerModel.getPolygons()[0].getFill());
         this.directionalArrow = Model2D.fromPolygons(directionalArrowMesh);
 
-        super.setCollisionPath(this.playerModel.getCollisionPath());
+        super.setCollisionPath(playerModel.getCollisionPath());
     }
 
     @Override
@@ -63,5 +66,13 @@ public class Player extends GameObject {
     public void destroy(SimpleManager origin) {
         playerModel.destroy(origin);
         playerIndicator.destroy(origin);
+    }
+
+    public int getPlayerNumber() {
+        return playerNumber;
+    }
+
+    public static class PlayerState {
+
     }
 }

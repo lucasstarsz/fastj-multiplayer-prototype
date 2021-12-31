@@ -40,13 +40,16 @@ public class ServerState {
                 if (serverClient == addedClient) {
                     continue;
                 }
-                Log.info(this.getClass(), "sending player {} to {}", playerNumber, serverClient.getId());
+                Log.debug(this.getClass(), "sending player {} to {}", playerNumber, serverClient.getId());
 
                 try {
                     serverClient.send(Networking.Client.AddPlayer, playerNumber);
                 } catch (IOException exception) {
                     if (tryRemoveClosedClient(serverClient, addedClient)) {
                         Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                    if (addedClient.isConnectionClosed() || !server.getClients().containsValue(addedClient)) {
+                        return;
                     }
                 }
             }
@@ -56,6 +59,7 @@ public class ServerState {
                 if (player.getValue() == addedClient) {
                     continue;
                 }
+                Log.debug(this.getClass(), "sending player {} to {}", idToPlayers.get(player.getKey()), addedClient.getId());
 
                 try {
                     addedClient.send(Networking.Client.AddPlayer, idToPlayers.get(player.getKey()));
@@ -78,9 +82,11 @@ public class ServerState {
         players.remove(disconnectedPlayerNumber);
 
         for (ServerClient serverClient : otherClients.values()) {
+            Log.debug(this.getClass(), "removing player {} from {}", disconnectedPlayerNumber, serverClient.getId());
             try {
                 serverClient.send(Networking.Client.RemovePlayer, disconnectedPlayerNumber);
             } catch (IOException exception) {
+                Log.debug("failed to remove from {}: {}", serverClient.getId(), exception.getMessage());
                 if (tryRemoveClosedClient(serverClient)) {
                     Log.error(this.getClass(), "Server IO error", exception);
                 }
@@ -92,6 +98,11 @@ public class ServerState {
         String key = "";
         try {
             int player = currentClient.in().readInt();
+            if (!players.containsKey(player)) {
+                Log.warn("Player {} was not found.", player);
+                server.removeClient(currentClient.getId());
+                return;
+            }
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
@@ -124,6 +135,12 @@ public class ServerState {
         String key = "";
         try {
             int player = currentClient.in().readInt();
+            if (!players.containsKey(player)) {
+                Log.warn("Player {} was not found.", player);
+                server.removeClient(currentClient.getId());
+                return;
+            }
+
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
@@ -156,8 +173,9 @@ public class ServerState {
         try {
             int syncPlayerNumber = currentClient.in().readInt();
             if (!players.containsKey(syncPlayerNumber)) {
-                Log.warn("Player {} was not found.");
+                Log.warn("Player {} was not found.", syncPlayerNumber);
                 server.removeClient(currentClient.getId());
+                return;
             }
 
             float translationX = currentClient.in().readFloat();
@@ -180,10 +198,49 @@ public class ServerState {
 
                 try {
                     serverClient.send(
-                            Networking.Client.SyncPlayerTransform,
+                            Networking.Client.PlayerSyncTransform,
                             syncPlayerNumber,
                             translationX,
                             translationY,
+                            rotation
+                    );
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
+        }
+    }
+
+    public void createSnowball(ServerClient currentClient, Map<UUID, ServerClient> allClients) {
+        try {
+            int playerNumber = currentClient.in().readInt();
+            if (!players.containsKey(playerNumber)) {
+                Log.warn("Player {} was not found.", playerNumber);
+                server.removeClient(currentClient.getId());
+                return;
+            }
+
+            float trajectoryX = currentClient.in().readFloat();
+            float trajectoryY = currentClient.in().readFloat();
+            float rotation = currentClient.in().readFloat();
+
+            for (ServerClient serverClient : allClients.values()) {
+                if (serverClient.equals(currentClient)) {
+                    continue;
+                }
+
+                try {
+                    serverClient.send(
+                            Networking.Client.PlayerCreateSnowball,
+                            playerNumber,
+                            trajectoryX,
+                            trajectoryY,
                             rotation
                     );
                 } catch (IOException exception) {
