@@ -77,7 +77,7 @@ public class ServerClient {
 
     public void shutdown() {
         if (socket.isClosed()) {
-            Log.warn("client {} already closed.", uuid);
+            Log.warn(this.getClass(), "client {} already disconnected.", uuid);
             return;
         }
 
@@ -87,7 +87,7 @@ public class ServerClient {
             exception.printStackTrace();
         }
 
-        Log.info(this.getClass(), "client {} closed.", uuid);
+        Log.info(this.getClass(), "client {} disconnected.", uuid);
     }
 
     synchronized void listen(Server server) {
