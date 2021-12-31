@@ -1,6 +1,7 @@
 package scripts;
 
 import tech.fastj.engine.FastJEngine;
+import tech.fastj.logging.Log;
 import tech.fastj.math.Pointf;
 import tech.fastj.graphics.game.GameObject;
 
@@ -13,8 +14,8 @@ import tech.fastj.systems.behaviors.Behavior;
 
 import java.io.IOException;
 
-import network.client.Client;
 import core.util.Networking;
+import network.client.Client;
 
 public class PlayerController implements Behavior {
 
@@ -44,23 +45,11 @@ public class PlayerController implements Behavior {
         rotation = 0f;
 
         keyListener = new KeyboardActionListener() {
-
             @Override
             public void onKeyRecentlyPressed(KeyboardStateEvent keyboardStateEvent) {
                 Keys key = keyboardStateEvent.getKey();
                 if (key == Keys.W || key == Keys.A || key == Keys.S || key == Keys.D) {
-                    try {
-                        client.send(Networking.Server.KeyPress, playerNumber, keyboardStateEvent.getKey().name());
-
-                        switch (keyboardStateEvent.getKey()) {
-                            case W -> movement.y -= MovementSpeed;
-                            case A -> rotation -= RotationSpeed;
-                            case S -> movement.y += MovementSpeed;
-                            case D -> rotation += RotationSpeed;
-                        }
-                    } catch (IOException exception) {
-                        FastJEngine.error("IO error", exception);
-                    }
+                    keyPress(key);
                 }
             }
 
@@ -68,18 +57,7 @@ public class PlayerController implements Behavior {
             public void onKeyReleased(KeyboardStateEvent keyboardStateEvent) {
                 Keys key = keyboardStateEvent.getKey();
                 if (key == Keys.W || key == Keys.A || key == Keys.S || key == Keys.D) {
-                    try {
-                        client.send(Networking.Server.KeyRelease, playerNumber, keyboardStateEvent.getKey().name());
-
-                        switch (keyboardStateEvent.getKey()) {
-                            case W -> movement.y += MovementSpeed;
-                            case A -> rotation += RotationSpeed;
-                            case S -> movement.y -= MovementSpeed;
-                            case D -> rotation -= RotationSpeed;
-                        }
-                    } catch (IOException exception) {
-                        FastJEngine.error("IO error", exception);
-                    }
+                    keyRelease(key);
                 }
             }
         };
@@ -123,6 +101,50 @@ public class PlayerController implements Behavior {
 //        inputManager.addMouseActionListener(mouseListener);
     }
 
+    public void keyPress(Keys key) {
+        try {
+            client.send(Networking.Server.KeyPress, playerNumber, key.name());
+            switch (key) {
+                case W -> {
+                    movement.y = 0f;
+                    movement.y -= MovementSpeed;
+                }
+                case A -> {
+                    rotation = 0f;
+                    rotation -= RotationSpeed;
+                }
+                case S -> {
+                    movement.y = 0f;
+                    movement.y += MovementSpeed;
+                }
+                case D -> {
+                    rotation = 0f;
+                    rotation += RotationSpeed;
+                }
+                default -> throw new IllegalArgumentException("Invalid key: " + key);
+            }
+        } catch (IOException exception) {
+            FastJEngine.error("IO error", exception);
+        }
+    }
+
+    public void keyRelease(Keys key) {
+        Log.info("released " + key);
+        try {
+            client.send(Networking.Server.KeyRelease, playerNumber, key.name());
+
+            switch (key) {
+                case W -> movement.y += MovementSpeed;
+                case A -> rotation += RotationSpeed;
+                case S -> movement.y -= MovementSpeed;
+                case D -> rotation -= RotationSpeed;
+                default -> throw new IllegalArgumentException("Invalid key: " + key);
+            }
+        } catch (IOException exception) {
+            FastJEngine.error("IO error", exception);
+        }
+    }
+
     public static boolean transformPlayer(Pointf movement, float rotation, GameObject player) {
         if (!movement.equals(Pointf.origin()) || rotation != 0f) {
             Pointf rotatedMovement = new Pointf(movement).rotate(-(player.getRotationWithin360() + rotation));
@@ -142,6 +164,14 @@ public class PlayerController implements Behavior {
         }
     }
 
+    public Pointf movement() {
+        return movement;
+    }
+
+    public float rotation() {
+        return rotation;
+    }
+
     @Override
     public void destroy() {
         inputManager.removeKeyboardActionListener(keyListener);
@@ -149,5 +179,20 @@ public class PlayerController implements Behavior {
         mouseListener = null;
         movement = null;
         rotation = 0f;
+    }
+
+    public void resetMovement() {
+        if (movement.y == MovementSpeed) {
+            keyRelease(Keys.S);
+        }
+        if (movement.y == -MovementSpeed) {
+            keyRelease(Keys.W);
+        }
+        if (rotation == RotationSpeed) {
+            keyRelease(Keys.D);
+        }
+        if (rotation == -RotationSpeed) {
+            keyRelease(Keys.A);
+        }
     }
 }

@@ -15,6 +15,8 @@ import tech.fastj.input.keyboard.Keys;
 import tech.fastj.resources.models.ModelUtil;
 import tech.fastj.systems.control.Scene;
 
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,20 +24,21 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import core.util.Networking;
 import game.GameManager;
 import network.client.Client;
 import objects.Player;
 import scripts.PlayerController;
 import util.FilePaths;
-import core.util.Networking;
 import util.SceneNames;
 
 import static scripts.PlayerController.MovementSpeed;
 import static scripts.PlayerController.RotationSpeed;
 
-public class GameScene extends Scene {
+public class GameScene extends Scene implements FocusListener {
 
     private Player player;
+    private PlayerController playerController;
     private int playerNumber;
 
     private final Map<Integer, Player> otherPlayers = new HashMap<>();
@@ -56,9 +59,11 @@ public class GameScene extends Scene {
                 true
         );
 
-        PlayerController playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
+        playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
+        canvas.getRawCanvas().addFocusListener(this);
         player.addBehavior(playerController, this);
         drawableManager.addGameObject(player);
+
         transformSync = Executors.newScheduledThreadPool(1);
         transformSync.scheduleWithFixedDelay(this::sendTransformSync, 1, 1, TimeUnit.SECONDS);
     }
@@ -105,6 +110,7 @@ public class GameScene extends Scene {
             transformSync.shutdownNow();
         }
         transformSync = null;
+        canvas.getRawCanvas().removeFocusListener(this);
     }
 
     @Override
@@ -157,6 +163,7 @@ public class GameScene extends Scene {
             case A -> rotation -= (isPressed) ? RotationSpeed : -RotationSpeed;
             case S -> movement.y += (isPressed) ? MovementSpeed : -MovementSpeed;
             case D -> rotation += (isPressed) ? RotationSpeed : -RotationSpeed;
+            default -> throw new IllegalArgumentException("Invalid key: " + key);
         }
 
         Transform2D otherPlayerTransform = otherPlayerTransforms.get(otherPlayerNumber);
@@ -168,5 +175,15 @@ public class GameScene extends Scene {
         Player removedPlayer = otherPlayers.remove(removedPlayerNumber);
         drawableManager.removeGameObject(removedPlayer.getID());
         otherPlayerTransforms.remove(removedPlayerNumber);
+    }
+
+    @Override
+    public void focusGained(FocusEvent e) {
+    }
+
+    @Override
+    public void focusLost(FocusEvent focusEvent) {
+        Log.info(PlayerController.class, "Focus lost. Releasing all keys.");
+        playerController.resetMovement();
     }
 }
