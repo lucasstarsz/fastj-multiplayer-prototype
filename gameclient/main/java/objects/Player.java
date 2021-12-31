@@ -23,7 +23,6 @@ public class Player extends GameObject {
     private final Text2D playerIndicator;
     private final int playerNumber;
     private final boolean isLocalPlayer;
-    private PlayerState playerState;
 
     public Player(Polygon2D[] playerPolygons, int playerNumber, boolean isLocalPlayer) {
         this.playerModel = Model2D.fromPolygons(playerPolygons);
@@ -76,9 +75,5 @@ public class Player extends GameObject {
 
     public boolean isLocalPlayer() {
         return isLocalPlayer;
-    }
-
-    public static class PlayerState {
-
     }
 }

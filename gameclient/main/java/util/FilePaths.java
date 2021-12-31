@@ -8,8 +8,9 @@ import core.util.FilePathUtil;
 
 public class FilePaths {
     public static final Path Player = FilePathUtil.pathFromClassLoad(FilePaths.class, "/player.psdf");
-    public static final Path Snowball = FilePathUtil.pathFromClassLoad(FilePaths.class, "/snowball.psdf");
     public static final Path PlayerArrow = FilePathUtil.pathFromClassLoad(FilePaths.class, "/playerarrow.psdf");
+    public static final Path Snowball = FilePathUtil.pathFromClassLoad(FilePaths.class, "/snowball.psdf");
+    public static final Path HealthBar = FilePathUtil.pathFromClassLoad(FilePaths.class, "/healthbar.psdf");
     public static final InputStream PublicGameKey = FilePathUtil.streamResource(FilePaths.class, "/clientts.pkcs12");
 
     public static final InputStream NotoSansRegular = streamResourceFromFolder("/notosans/NotoSans-Regular.ttf");

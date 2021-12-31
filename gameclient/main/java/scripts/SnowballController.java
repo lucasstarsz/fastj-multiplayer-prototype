@@ -51,9 +51,13 @@ public class SnowballController implements Behavior {
         keyListener = new KeyboardActionListener() {
             @Override
             public void onKeyRecentlyPressed(KeyboardStateEvent keyboardStateEvent) {
+                if (scene.isPlayerDead()) {
+                    return;
+                }
+
                 if (gameObject instanceof Player player) {
                     if (keyboardStateEvent.getKey() == Keys.Space) {
-                        if (currentSnowballThrowCooldown > 0) {
+                        if (currentSnowballThrowCooldown > 0 || currentSnowballMakeCooldown > 0) {
                             Log.debug(GameScene.class, "player {} is still on cooldown.", player.getPlayerNumber());
                             return;
                         }
@@ -77,7 +81,7 @@ public class SnowballController implements Behavior {
                     }
 
                     if (keyboardStateEvent.getKey() == Keys.R) {
-                        if (currentSnowballMakeCooldown > 0) {
+                        if (currentSnowballThrowCooldown > 0 || currentSnowballMakeCooldown > 0) {
                             Log.debug(GameScene.class, "player {} is still on cooldown.", player.getPlayerNumber());
                             return;
                         }

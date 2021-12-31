@@ -8,6 +8,8 @@ public class Networking {
         public static final byte KeyRelease = 2;
         public static final byte SyncTransform = 3;
         public static final byte CreateSnowball = 4;
+        public static final byte TemperatureDeath = 5;
+        public static final byte HitDamageDeath = 6;
     }
 
     public static class ServerCommands {
@@ -21,5 +23,7 @@ public class Networking {
         public static final byte PlayerKeyRelease = 4;
         public static final byte PlayerSyncTransform = 5;
         public static final byte PlayerCreateSnowball = 6;
+        public static final byte PlayerTemperatureDeath = 7;
+        public static final byte PlayerHitDamageDeath = 8;
     }
 }

@@ -269,4 +269,74 @@ public class ServerState {
         }
         return !removedClosedClient;
     }
+
+    public void temperatureDeath(ServerClient currentClient, Map<UUID, ServerClient> allClients) {
+        try {
+            int playerNumber = currentClient.in().readInt();
+            if (!players.containsKey(playerNumber)) {
+                Log.warn("Player {} was not found.", playerNumber);
+                server.removeClient(currentClient.getId());
+                return;
+            }
+
+            int otherPlayerNumber = currentClient.in().readInt();
+
+            for (ServerClient serverClient : allClients.values()) {
+                if (serverClient.equals(currentClient)) {
+                    continue;
+                }
+
+                try {
+                    serverClient.send(
+                            Networking.Client.PlayerTemperatureDeath,
+                            playerNumber,
+                            otherPlayerNumber
+                    );
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
+        }
+    }
+
+    public void hitDamageDeath(ServerClient currentClient, Map<UUID, ServerClient> allClients) {
+        try {
+            int playerNumber = currentClient.in().readInt();
+            if (!players.containsKey(playerNumber)) {
+                Log.warn("Player {} was not found.", playerNumber);
+                server.removeClient(currentClient.getId());
+                return;
+            }
+
+            int otherPlayerNumber = currentClient.in().readInt();
+
+            for (ServerClient serverClient : allClients.values()) {
+                if (serverClient.equals(currentClient)) {
+                    continue;
+                }
+
+                try {
+                    serverClient.send(
+                            Networking.Client.PlayerHitDamageDeath,
+                            playerNumber,
+                            otherPlayerNumber
+                    );
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
+            }
+        } catch (IOException exception) {
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
+        }
+    }
 }

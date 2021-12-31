@@ -15,7 +15,6 @@ import tech.fastj.systems.control.SimpleManager;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
-import java.util.List;
 
 import scene.GameScene;
 import util.FilePaths;
@@ -23,6 +22,8 @@ import util.Tags;
 
 public class Snowball extends GameObject implements Behavior {
 
+    public static final int SnowballTempDamage = 10;
+    public static final int SnowballHitDamage = 15;
     private static final float MinDistance = 700f;
     private static final float MaxDistance = 1000f;
     private static final float TravelSpeed = 25f;
@@ -60,13 +61,15 @@ public class Snowball extends GameObject implements Behavior {
 
         translate(travelMovement);
 
-        List<Drawable> enemies = scene.getAllWithTag(Tags.Enemy);
-        for (Drawable enemy : enemies) {
-            if (enemy instanceof Player otherPlayer) {
-                if (otherPlayer.collidesWith(this)) {
-                    // TODO: player take damage
-                    Log.info(Snowball.class, "Snowball from player {} hit player {}", otherPlayer.getPlayerNumber(), scene.getLocalPlayerNumber());
+        Drawable player = scene.getAllWithTag(Tags.LocalPlayer).get(0);
+        if (player instanceof Player localPlayer && playerNumber != localPlayer.getPlayerNumber()) {
+            if (localPlayer.collidesWith(this)) {
+                FastJEngine.runAfterUpdate(() -> this.destroy(scene));
+                if (scene.isPlayerDead()) {
+                    return;
                 }
+                Log.info(Snowball.class, "Snowball from player {} hit player {}", playerNumber, scene.getLocalPlayerNumber());
+                scene.playerTakeSnowballDamage(playerNumber);
             }
         }
 
@@ -74,7 +77,6 @@ public class Snowball extends GameObject implements Behavior {
         if (life <= 0f) {
             FastJEngine.runAfterUpdate(() -> destroy(scene));
         }
-        Log.info("life is now {}", life);
     }
 
     @Override

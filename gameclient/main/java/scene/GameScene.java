@@ -14,6 +14,7 @@ import tech.fastj.input.keyboard.Keys;
 import tech.fastj.resources.models.ModelUtil;
 import tech.fastj.systems.control.Scene;
 
+import java.awt.Color;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.IOException;
@@ -30,6 +31,7 @@ import objects.Player;
 import objects.Snowball;
 import scripts.PlayerController;
 import scripts.SnowballController;
+import ui.HealthBar;
 import util.FilePaths;
 import util.SceneNames;
 import util.Tags;
@@ -42,8 +44,10 @@ public class GameScene extends Scene implements FocusListener {
     private Player player;
     private PlayerController playerController;
     private SnowballController snowballController;
+    private HealthBar temperatureBar, hitDamageBar;
     private int localPlayerNumber;
     private Pointf canvasCenter;
+    private boolean isDead;
 
     private final Map<Integer, Player> otherPlayers = new HashMap<>();
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
@@ -56,18 +60,26 @@ public class GameScene extends Scene implements FocusListener {
 
     @Override
     public void load(FastJCanvas canvas) {
+        isDead = false;
         canvas.getRawCanvas().addFocusListener(this);
         canvasCenter = canvas.getCanvasCenter();
 
         Client client = FastJEngine.<GameManager>getLogicManager().getClient();
         player = new Player(ModelUtil.loadModel(FilePaths.Player), localPlayerNumber, true);
+        player.addTag(Tags.LocalPlayer, this);
         player.translate(canvasCenter);
 
-        playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, localPlayerNumber);
+        playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, localPlayerNumber, this);
         player.addBehavior(playerController, this);
         snowballController = new SnowballController(this, client);
         player.addBehavior(snowballController, this);
         drawableManager.addGameObject(player);
+
+        temperatureBar = new HealthBar(this, Color.red, 200);
+        drawableManager.addUIElement(temperatureBar);
+        hitDamageBar = new HealthBar(this, Color.red.darker().darker(), 200);
+        hitDamageBar.translate(Pointf.down().multiply(45f));
+        drawableManager.addUIElement(hitDamageBar);
 
         transformSync = Executors.newScheduledThreadPool(1);
         transformSync.scheduleWithFixedDelay(this::sendTransformSync, 1, 1, TimeUnit.SECONDS);
@@ -194,6 +206,10 @@ public class GameScene extends Scene implements FocusListener {
         return localPlayerNumber;
     }
 
+    public boolean isPlayerDead() {
+        return isDead;
+    }
+
     public void spawnSnowball(int otherPlayerNumber, Pointf trajectory, float rotation) {
         Player otherPlayer = otherPlayers.get(otherPlayerNumber);
         if (otherPlayer == null) {
@@ -210,5 +226,43 @@ public class GameScene extends Scene implements FocusListener {
         this.addBehaviorListener(snowball);
         snowball.init(player);
         drawableManager.addGameObject(snowball);
+    }
+
+    public void playerTakeSnowballDamage(int otherPlayerNumber) {
+        if (isDead) {
+            return;
+        }
+
+        try {
+            if (temperatureBar.modifyHealthRemaining(-Snowball.SnowballTempDamage)) {
+                Log.info("Player {} died to temp damage.", localPlayerNumber);
+                Client client = FastJEngine.<GameManager>getLogicManager().getClient();
+                client.send(Networking.Server.TemperatureDeath, localPlayerNumber, otherPlayerNumber);
+            } else if (hitDamageBar.modifyHealthRemaining(-Snowball.SnowballHitDamage)) {
+                Log.info("Player {} died to hit damage.", localPlayerNumber);
+                Client client = FastJEngine.<GameManager>getLogicManager().getClient();
+                client.send(Networking.Server.HitDamageDeath, localPlayerNumber, otherPlayerNumber);
+            }
+        } catch (IOException exception) {
+            FastJEngine.error("Couldn't send player death.", exception);
+        }
+    }
+
+    public void playerTakeTempDamage() {
+        if (isDead) {
+            return;
+        }
+
+        try {
+            if (!temperatureBar.modifyHealthRemaining(-PlayerController.TempDamage)) {
+                return;
+            }
+
+            Log.info("Player {} died to residual temp damage.", localPlayerNumber);
+            Client client = FastJEngine.<GameManager>getLogicManager().getClient();
+            client.send(Networking.Server.TemperatureDeath, localPlayerNumber, Integer.MIN_VALUE);
+        } catch (IOException exception) {
+            FastJEngine.error("Couldn't send player death.", exception);
+        }
     }
 }

@@ -2,22 +2,23 @@
 
 ## Before Starting Gameplay
 - [ ] Add ping-loop of some sort?
-- [ ] Fix player transforms bug somefuckinghow
+- [x] Fix player transforms bug somehow
+- [x] Fix server connecting somehow
 - [ ] Acquire the linux laptop to generate deb installers/executables
 - [ ] Use dad's macbook to generate macOS executables/installers???
 - [ ] Test on separate machines (do that before the next bit) -- might need to force accept unverified cert?
 
 ## Multiplayer PvP
-- [ ] Players make snowballs, then throw them
-  - [ ] Takes 1 second to make a snowball
-  - [ ] Can only carry 5 at a time
+- [x] Players make snowballs, then throw them
+  - [x] Takes 1 second to make a snowball
+  - [x] Can only carry 5 at a time
   - [ ] Carrying 4+ without a powerup reduces movement/rotation speed by 20%
-  - [ ] Takes .5 to throw a snowball
-  - [ ] snowball travels 600-800 pixels before petering out
-- [ ] Player has temp bar & damage bar
-  - [ ] If they stop moving for too long, their temp bar depletes
-  - [ ] If they get hit with a snowball, their temp bar + their damage bar depletes
-  - [ ] If either reaches 0, player freezes/gets knocked out (lose, death message in chat?)
+  - [x] Takes .5 to throw a snowball
+  - [x] snowball travels 700-1000 pixels before petering out
+- [x] Player has temp bar & damage bar
+  - [x] If they stop moving for too long, their temp bar depletes
+  - [x] If they get hit with a snowball, their temp bar + their damage bar depletes
+  - [x] If either reaches 0, player freezes/gets knocked out (lose, death message in chat?)
 - [ ] If We Have Time: Powerups
   - [ ] warm coat
     - [ ] reduce temp depletion by 90%

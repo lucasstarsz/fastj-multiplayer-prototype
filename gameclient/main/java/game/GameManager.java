@@ -145,6 +145,30 @@ public class GameManager extends SceneManager {
                     FastJEngine.closeGame();
                 }
             });
+            client.addServerAction(Networking.Client.PlayerTemperatureDeath, client -> {
+                try {
+                    int player = client.in().readInt();
+                    int otherPlayer = client.in().readInt();
+                    if (otherPlayer == Integer.MIN_VALUE) {
+                        Log.info("Player {} was killed by getting too cold.", player);
+                    } else {
+                        Log.info("Player {} was snowballed by player {}", player, otherPlayer);
+                    }
+                } catch (IOException exception) {
+                    ClientMain.displayException("Couldn't receive PlayerKeyRelease data", exception);
+                    FastJEngine.closeGame();
+                }
+            });
+            client.addServerAction(Networking.Client.PlayerHitDamageDeath, client -> {
+                try {
+                    int player = client.in().readInt();
+                    int otherPlayer = client.in().readInt();
+                    Log.info("Player {} was snowballed by player {}", player, otherPlayer);
+                } catch (IOException exception) {
+                    ClientMain.displayException("Couldn't receive PlayerKeyRelease data", exception);
+                    FastJEngine.closeGame();
+                }
+            });
 
             gameScene = new GameScene(playerNumber);
             addScene(gameScene);
