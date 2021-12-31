@@ -15,8 +15,7 @@ sourceSets {
 repositories.maven { url('https://jitpack.io/') }
 repositories.mavenCentral()
 
-dependencies.implementation('com.github.fastjengine:FastJ:1.6.0-SNAPSHOT-3')
-dependencies.implementation('org.slf4j:slf4j-simple:2.0.0-alpha3')
+dependencies.implementation(libs.bundles.fastj)
 
 dependencies.testImplementation(dependencies.platform('org.junit:junit-bom:5.8.2'))
 dependencies.testImplementation('org.junit.jupiter:junit-jupiter:5.8.2')

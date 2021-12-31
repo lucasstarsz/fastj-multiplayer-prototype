@@ -1,3 +1,5 @@
 /* Feel free to change this to whatever your project will be named! */
-rootProject.name = 'Multiplayer Game'
+rootProject.name = 'MultiplayerGame'
 include('core', 'networking', 'gameclient', 'gameserver')
+enableFeaturePreview("VERSION_CATALOGS")
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
