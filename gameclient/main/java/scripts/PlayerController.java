@@ -78,7 +78,7 @@ public class PlayerController implements Behavior {
                     return;
                 }
 
-                isMoving = true;
+                isMoving = false;
                 Keys key = keyboardStateEvent.getKey();
                 if (key == Keys.W || key == Keys.A || key == Keys.S || key == Keys.D) {
                     keyRelease(key);
@@ -96,7 +96,7 @@ public class PlayerController implements Behavior {
                     scene.playerTakeTempDamage();
                 },
                 3,
-                3,
+                1,
                 TimeUnit.SECONDS
         );
 
