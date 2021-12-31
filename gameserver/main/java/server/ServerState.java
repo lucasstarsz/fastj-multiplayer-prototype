@@ -1,6 +1,5 @@
 package server;
 
-import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
 
 import tech.fastj.input.keyboard.Keys;
@@ -10,9 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import core.util.Networking;
 import network.server.Server;
 import network.server.ServerClient;
-import core.util.Networking;
 
 public class ServerState {
 
@@ -31,7 +30,7 @@ public class ServerState {
             int playerNumber = newPlayerIncrement++;
             addedClient.out().writeInt(playerNumber);
             addedClient.out().flush();
-            Log.info(GameServer.class, "client {} set to player {}", addedClient.getId(), playerNumber);
+            Log.info(this.getClass(), "client {} set to player {}", addedClient.getId(), playerNumber);
 
             idToPlayers.put(addedClient.getId(), playerNumber);
             players.put(playerNumber, addedClient);
@@ -41,9 +40,15 @@ public class ServerState {
                 if (serverClient == addedClient) {
                     continue;
                 }
-                Log.info("sending player {} to {}", playerNumber, serverClient);
+                Log.info(this.getClass(), "sending player {} to {}", playerNumber, serverClient);
 
-                serverClient.send(Networking.Client.AddPlayer, playerNumber);
+                try {
+                    serverClient.send(Networking.Client.AddPlayer, playerNumber);
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(serverClient, addedClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
             }
 
             // add other clients to new player
@@ -52,24 +57,34 @@ public class ServerState {
                     continue;
                 }
 
-                addedClient.send(Networking.Client.AddPlayer, player.getKey());
+                try {
+                    addedClient.send(Networking.Client.AddPlayer, player.getKey());
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(addedClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
             }
 
         } catch (IOException exception) {
-            FastJEngine.error("Server IO error", exception);
+            if (tryRemoveClosedClient(addedClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
         }
     }
 
     void syncRemovePlayer(ServerClient removedClient, Map<UUID, ServerClient> otherClients) {
-        try {
-            int disconnectedPlayerNumber = idToPlayers.remove(removedClient.getId());
-            players.remove(disconnectedPlayerNumber);
+        int disconnectedPlayerNumber = idToPlayers.remove(removedClient.getId());
+        players.remove(disconnectedPlayerNumber);
 
-            for (ServerClient serverClient : otherClients.values()) {
+        for (ServerClient serverClient : otherClients.values()) {
+            try {
                 serverClient.send(Networking.Client.RemovePlayer, disconnectedPlayerNumber);
+            } catch (IOException exception) {
+                if (tryRemoveClosedClient(serverClient)) {
+                    Log.error(this.getClass(), "Server IO error", exception);
+                }
             }
-        } catch (IOException exception) {
-            FastJEngine.error("Server IO error", exception);
         }
     }
 
@@ -80,7 +95,7 @@ public class ServerState {
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
-            Log.trace(GameServer.class, "player {} pressed {}", player, key);
+            Log.trace(this.getClass(), "player {} pressed {}", player, key);
 
             String keyPressed = key;
             for (ServerClient serverClient : allClients.values()) {
@@ -91,13 +106,17 @@ public class ServerState {
                 try {
                     serverClient.send(Networking.Client.PlayerKeyPress, player, keyPressed);
                 } catch (IOException exception) {
-                    FastJEngine.error("Server IO error", exception);
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
                 }
             }
         } catch (IOException exception) {
-            FastJEngine.error("Server IO error", exception);
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
         } catch (IllegalArgumentException exception) {
-            Log.warn(GameServer.class, "Invalid identifier press {} from client {}", key, currentClient.getId());
+            Log.warn(this.getClass(), "Invalid identifier press {} from client {}", key, currentClient.getId());
         }
     }
 
@@ -108,7 +127,7 @@ public class ServerState {
             key = currentClient.in().readUTF();
             // ensure identifier integrity
             Keys.valueOf(key);
-            Log.trace(GameServer.class, "player {} released {}", player, key);
+            Log.trace(this.getClass(), "player {} released {}", player, key);
 
             String keyReleased = key;
             for (ServerClient serverClient : allClients.values()) {
@@ -119,13 +138,17 @@ public class ServerState {
                 try {
                     serverClient.send(Networking.Client.PlayerKeyRelease, player, keyReleased);
                 } catch (IOException exception) {
-                    FastJEngine.error("Server IO error", exception);
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
                 }
             }
         } catch (IOException exception) {
-            FastJEngine.error("Server IO error", exception);
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
         } catch (IllegalArgumentException exception) {
-            Log.warn(GameServer.class, "Invalid identifier release {} from client {}", key, currentClient.getId());
+            Log.warn(this.getClass(), "Invalid identifier release {} from client {}", key, currentClient.getId());
         }
     }
 
@@ -142,7 +165,7 @@ public class ServerState {
             float rotation = currentClient.in().readFloat();
 
             Log.trace(
-                    GameServer.class,
+                    this.getClass(),
                     "Syncing player {} to {} {} {}",
                     syncPlayerNumber,
                     translationX,
@@ -164,11 +187,26 @@ public class ServerState {
                             rotation
                     );
                 } catch (IOException exception) {
-                    FastJEngine.error("Server IO error", exception);
+                    if (tryRemoveClosedClient(serverClient, currentClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
                 }
             }
         } catch (IOException exception) {
-            FastJEngine.error("Server IO error", exception);
+            if (tryRemoveClosedClient(currentClient)) {
+                Log.error(this.getClass(), "Server IO error", exception);
+            }
         }
+    }
+
+    public boolean tryRemoveClosedClient(ServerClient... serverClients) {
+        boolean removedClosedClient = false;
+        for (ServerClient serverClient : serverClients) {
+            if (serverClient.isConnectionClosed()) {
+                server.removeClient(serverClient.getId());
+                removedClosedClient = true;
+            }
+        }
+        return !removedClosedClient;
     }
 }
