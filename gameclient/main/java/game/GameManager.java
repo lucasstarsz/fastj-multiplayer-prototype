@@ -70,7 +70,7 @@ public class GameManager extends SceneManager {
             client.addServerAction(Networking.Client.AddPlayer, client -> {
                 try {
                     int newPlayerNumber = client.in().readInt();
-                    Log.info(GameManager.class, "Adding player {}", newPlayerNumber);
+                    Log.debug(GameManager.class, "Adding other player {}", newPlayerNumber);
                     gameScene.addNewPlayer(newPlayerNumber);
                 } catch (IOException exception) {
                     ClientMain.displayException("Couldn't receive AddPlayer data", exception);
@@ -80,7 +80,7 @@ public class GameManager extends SceneManager {
             client.addServerAction(Networking.Client.RemovePlayer, client -> {
                 try {
                     int removedPlayerNumber = client.in().readInt();
-                    Log.info(GameManager.class, "Removing player {}", removedPlayerNumber);
+                    Log.debug(GameManager.class, "Removing other player {}", removedPlayerNumber);
                     gameScene.removePlayer(removedPlayerNumber);
                 } catch (IOException exception) {
                     ClientMain.displayException("Couldn't receive RemovePlayer data", exception);
@@ -93,7 +93,7 @@ public class GameManager extends SceneManager {
                     float translationX = client.in().readFloat();
                     float translationY = client.in().readFloat();
                     float rotation = client.in().readFloat();
-                    Log.info(GameManager.class, "Syncing player {} to {} {} {}", syncPlayerNumber, translationX, translationY, rotation);
+                    Log.debug(GameManager.class, "Syncing player {} to {} {} {}", syncPlayerNumber, translationX, translationY, rotation);
                     gameScene.syncOtherPlayer(syncPlayerNumber, translationX, translationY, rotation);
                 } catch (IOException exception) {
                     ClientMain.displayException("Couldn't receive SyncPlayer data", exception);
@@ -106,7 +106,7 @@ public class GameManager extends SceneManager {
                     int player = client.in().readInt();
                     key = client.in().readUTF();
                     Keys keyPressed = Keys.valueOf(key);
-                    Log.info(GameManager.class, "player {} pressed {}", player, keyPressed.name());
+                    Log.debug(GameManager.class, "player {} pressed {}", player, keyPressed.name());
                     gameScene.transformOtherPlayer(player, keyPressed, true);
                 } catch (IOException exception) {
                     ClientMain.displayException("Couldn't receive PlayerKeyPress data", exception);
@@ -121,7 +121,7 @@ public class GameManager extends SceneManager {
                     int player = client.in().readInt();
                     key = client.in().readUTF();
                     Keys keyReleased = Keys.valueOf(key);
-                    Log.info(GameManager.class, "player {} released {}", player, keyReleased.name());
+                    Log.debug(GameManager.class, "player {} released {}", player, keyReleased.name());
                     gameScene.transformOtherPlayer(player, keyReleased, false);
                 } catch (IOException exception) {
                     ClientMain.displayException("Couldn't receive PlayerKeyRelease data", exception);

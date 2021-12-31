@@ -1,8 +1,6 @@
 package objects;
 
 import tech.fastj.math.Pointf;
-import tech.fastj.graphics.Boundary;
-import tech.fastj.graphics.Drawable;
 import tech.fastj.graphics.game.GameObject;
 import tech.fastj.graphics.game.Model2D;
 import tech.fastj.graphics.game.Polygon2D;
@@ -24,60 +22,19 @@ public class Player extends GameObject {
     private final Model2D playerModel;
     private final Model2D directionalArrow;
     private final Text2D playerIndicator;
-    private final int playerNumber;
-    private final boolean isLocalPlayer;
-    private final Pointf baseModelTranslation;
-    private final Pointf baseIndicatorTranslation;
 
     public Player(Model2D playerModel, int playerNumber, boolean isLocalPlayer) {
         this.playerModel = playerModel;
-        baseModelTranslation = this.playerModel.getTranslation();
-        this.playerNumber = playerNumber;
-        this.isLocalPlayer = isLocalPlayer;
-        this.playerIndicator = Text2D.create(this.isLocalPlayer ? "You" : "P" + this.playerNumber)
+        this.playerIndicator = Text2D.create(isLocalPlayer ? "You" : "P" + playerNumber)
                 .withFont(Fonts.DefaultNotoSans)
                 .build();
+        playerIndicator.translate(new Pointf(25f).subtract(playerIndicator.getCenter()));
 
         Polygon2D[] directionalArrowMesh = ModelUtil.loadModel(FilePaths.PlayerArrow);
         directionalArrowMesh[0].setFill(((Color) playerModel.getPolygons()[0].getFill()).brighter().brighter().brighter());
         this.directionalArrow = Model2D.fromPolygons(directionalArrowMesh);
 
         super.setCollisionPath(this.playerModel.getCollisionPath());
-
-        Pointf playerIndicatorWidth = Pointf.subtract(
-                playerIndicator.getBound(Boundary.TopRight),
-                playerIndicator.getBound(Boundary.TopLeft)
-        );
-        Pointf playerModelHeight = Pointf.subtract(
-                this.playerModel.getBound(Boundary.BottomLeft),
-                this.playerModel.getBound(Boundary.TopLeft)
-        );
-        baseIndicatorTranslation = this.playerModel.getCenter()
-                .add(Pointf.divide(playerIndicatorWidth, 2f))
-                .subtract(playerIndicatorWidth.x, playerModelHeight.y / 5f);
-        playerIndicator.setTranslation(baseIndicatorTranslation);
-    }
-
-    @Override
-    public void translate(Pointf translationMod) {
-        super.translate(translationMod);
-        playerIndicator.translate(translationMod);
-    }
-
-    @Override
-    public Drawable setTranslation(Pointf setTranslation) {
-        super.setTranslation(setTranslation);
-        playerModel.setTranslation(baseModelTranslation);
-        playerIndicator.setTranslation(Pointf.add(setTranslation, baseIndicatorTranslation));
-        return this;
-    }
-
-    public int getPlayerNumber() {
-        return playerNumber;
-    }
-
-    public boolean isLocalPlayer() {
-        return isLocalPlayer;
     }
 
     @Override
@@ -86,14 +43,13 @@ public class Player extends GameObject {
             return;
         }
 
-        AffineTransform oldTransform = (AffineTransform) g.getTransform().clone();
         AffineTransform oldTransform2 = (AffineTransform) g.getTransform().clone();
         g.transform(getTransformation());
+
         directionalArrow.render(g);
         playerModel.render(g);
-        g.setTransform(oldTransform);
-        g.translate(playerModel.getTranslation().x, playerModel.getTranslation().y);
         playerIndicator.render(g);
+
         g.setTransform(oldTransform2);
     }
 

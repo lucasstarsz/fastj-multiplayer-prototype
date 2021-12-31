@@ -40,6 +40,7 @@ public class GameScene extends Scene implements FocusListener {
     private Player player;
     private PlayerController playerController;
     private int playerNumber;
+    private Pointf canvasCenter;
 
     private final Map<Integer, Player> otherPlayers = new HashMap<>();
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
@@ -52,12 +53,15 @@ public class GameScene extends Scene implements FocusListener {
 
     @Override
     public void load(FastJCanvas canvas) {
+        canvasCenter = canvas.getCanvasCenter();
+
         Client client = FastJEngine.<GameManager>getLogicManager().getClient();
         player = new Player(
                 Model2D.fromPolygons(ModelUtil.loadModel(FilePaths.Player)),
                 playerNumber,
                 true
         );
+        player.translate(canvasCenter);
 
         playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, playerNumber);
         canvas.getRawCanvas().addFocusListener(this);
@@ -132,7 +136,7 @@ public class GameScene extends Scene implements FocusListener {
 
     public void addNewPlayer(int newPlayerNumber) {
         if (otherPlayers.containsKey(newPlayerNumber)) {
-            Log.warn("Already contains player {}", newPlayerNumber);
+            Log.warn(GameScene.class, "Already contains player {}", newPlayerNumber);
             return;
         }
 
@@ -144,6 +148,7 @@ public class GameScene extends Scene implements FocusListener {
                 newPlayerNumber,
                 false
         );
+        newPlayer.translate(canvasCenter);
         drawableManager.addGameObject(newPlayer);
         otherPlayers.put(newPlayerNumber, newPlayer);
         otherPlayerTransforms.put(newPlayerNumber, new Transform2D());
