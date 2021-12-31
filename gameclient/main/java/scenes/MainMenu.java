@@ -33,6 +33,7 @@ import network.client.Client;
 import network.client.ClientConfig;
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
+import util.Colors;
 import util.FilePaths;
 import util.Fonts;
 import util.SceneNames;
@@ -54,7 +55,7 @@ public class MainMenu extends Scene {
     @Override
     public void load(FastJCanvas canvas) {
         joinMultiplayerButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 2.5f), ButtonSize);
-        joinMultiplayerButton.setFill(Color.lightGray);
+        joinMultiplayerButton.setFill(Colors.Snowy);
         joinMultiplayerButton.setText("Join Multiplayer Lobby");
         joinMultiplayerButton.setFont(ButtonTextFont);
         joinMultiplayerButton.translate(joinMultiplayerButton.getCenter().subtract(joinMultiplayerButton.getTranslation()).multiply(-1f));
@@ -156,7 +157,7 @@ public class MainMenu extends Scene {
         drawableManager.addUIElement(joinMultiplayerButton);
 
         exitGameButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.5f), ButtonSize);
-        exitGameButton.setFill(Color.lightGray);
+        exitGameButton.setFill(Colors.Snowy);
         exitGameButton.setText("Exit Game");
         exitGameButton.setFont(ButtonTextFont);
         exitGameButton.translate(exitGameButton.getCenter().subtract(exitGameButton.getTranslation()).multiply(-1f));

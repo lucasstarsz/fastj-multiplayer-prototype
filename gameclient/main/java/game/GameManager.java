@@ -13,13 +13,13 @@ import tech.fastj.input.keyboard.Keys;
 import tech.fastj.systems.control.SceneManager;
 
 import javax.swing.SwingUtilities;
-import java.awt.Color;
 import java.io.IOException;
 
 import core.util.Networking;
 import network.client.Client;
 import scenes.GameScene;
 import scenes.MainMenu;
+import util.Colors;
 import util.SceneNames;
 
 public class GameManager extends SceneManager {
@@ -34,7 +34,7 @@ public class GameManager extends SceneManager {
 
     @Override
     public void init(FastJCanvas canvas) {
-        canvas.setBackgroundColor(Color.lightGray.darker());
+        canvas.setBackgroundColor(Colors.Snowy.darker());
         canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
 
         mainMenu = new MainMenu();
