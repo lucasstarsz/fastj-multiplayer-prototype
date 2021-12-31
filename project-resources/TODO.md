@@ -48,11 +48,15 @@
     - [ ] Player was sniped. (Death by snowball that traveled 777+ pixels)
 
 ## Lobbies
-- [ ] Specify what host to connect to
+- [x] Specify what host to connect to
 - [ ] Join lobby, everyone confirm readiness
   - [ ] Max 8 to a lobby?
 - [ ] Position everyone in a circle around spawn
 - [ ] 3 2 1 go
+- [x] on player win, message dialog showing who won
+- [x] then, leave lobby
+  - [ ] or join next game
+
 
 ## Music
 - [ ] Check voice recorder for references
@@ -74,8 +78,8 @@
 - [ ] Snowball launcher
 
 ## UI Elements (yeah, make these) -- maybe mvc for updating them based on player info change?
-- [ ] Health bars (for Lauren:tm:)
-  - [ ] Temp/damage bars bottom left above all
+- [x] Health bars (for Lauren:tm:)
+  - [x] Temp/damage bars bottom left above all
 - [ ] Stat-showing box
   - [ ] Snowball count on bottom left of bars (snowball_image: x/y)
   - [ ] Current powerup on bottom right of bars (hover over to see what the powerup does)
@@ -85,19 +89,22 @@
   - [ ] Current player position
   - [ ] Current player rotation
   - [ ] Active snowball list (current position, trajectory)
-- [ ] Buttons
-  - [ ] Choose multiplayer from main menu on center of screen
-  - [ ] Open settings from main menu below multiplayer button
+- [x] Button (FastJ Default)
+  - [x] Choose multiplayer from main menu on center of screen
+  - [x] Open settings from main menu below multiplayer button
   - [ ] Confirm ready from lobby, bottom center of screen
   - [ ] Leave session to return to multiplayer, top left door with arrow image (open dialog for confirmation)
 - [ ] Arrowed Buttons
   - [ ] Choose Graphics Settings (antialiasing, color rendering, subpixel rendering) (use the names for each setting state as the option shown)
-- [ ] Slider? Wow this is a lot of work
-  - [ ] Audio level (0-100, convert to audio level for fastj)
+- [x] Slider? Wow this is a lot of work
+  - [x] Audio level (0-100, convert to audio level for fastj)
   - [ ] Sfx level (0-100, convert to audio level for fastj)
 
 ## Game Name
-- [ ] Name the dang game why don't you call it "Hit!"
+- [x] Name the dang game why don't you
+  - [ ] call it "Hit!"
+  - [x] Or Snowball Fight or something
+
 
 ## Game Map
 - [ ] Mostly white background, tiny hints of blue and super light gray
