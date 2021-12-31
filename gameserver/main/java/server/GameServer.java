@@ -36,6 +36,7 @@ public class GameServer implements Runnable {
     private void setupClientActions() {
         server.addOnClientConnect(serverState::syncAddPlayer);
         server.addOnClientDisconnect(serverState::syncRemovePlayer);
+        server.addOnClientDisconnect((removedClient, allClients) -> serverState.checkWinCondition(allClients));
         server.addServerCommand(new ServerCommand(Networking.ServerCommands.ToggleClientConnect, this::toggleClientConnect));
         server.addClientAction(new ClientDataAction(Networking.Server.KeyPress, serverState::handleKeyPress));
         server.addClientAction(new ClientDataAction(Networking.Server.KeyRelease, serverState::handleKeyRelease));

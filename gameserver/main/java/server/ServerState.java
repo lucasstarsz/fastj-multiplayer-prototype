@@ -354,8 +354,11 @@ public class ServerState {
             return;
         }
         alivePlayers.get(deadPlayer).set(false);
-        Log.info("" + alivePlayers.values().stream().filter(AtomicBoolean::get).count());
+        Log.info("{} player(s) left alive.", alivePlayers.values().stream().filter(AtomicBoolean::get).count());
+        checkWinCondition(allClients);
+    }
 
+    void checkWinCondition(Map<UUID, ServerClient> allClients) {
         if (alivePlayers.values().stream().filter(AtomicBoolean::get).count() == 1) {
             int alivePlayer = alivePlayers.entrySet()
                     .stream()
@@ -363,7 +366,7 @@ public class ServerState {
                     .findFirst()
                     .get()
                     .getKey();
-            Log.info("only player {} alive", alivePlayer);
+            Log.info("Only player {} is alive.", alivePlayer);
 
             for (ServerClient serverClient : allClients.values()) {
                 try {
