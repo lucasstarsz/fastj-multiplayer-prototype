@@ -193,7 +193,10 @@ public class Server implements Runnable {
             return;
         }
 
-        removedClient.shutdown();
+        if (!removedClient.isConnectionClosed()) {
+            removedClient.shutdown();
+        }
+
         for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientDisconnectAction : clientDisconnectActions) {
             clientDisconnectAction.accept(removedClient, getClients());
         }
@@ -301,9 +304,13 @@ public class Server implements Runnable {
     }
 
     private synchronized void acceptClient() throws IOException {
+        Log.trace(this.getClass(), "Accepting new client...");
         Socket client = server.accept();
         UUID clientID = UUID.randomUUID();
+        Log.trace(this.getClass(), "Received client, given id {}", clientID);
+
         ServerClient serverClient = new ServerClient(client, clientID);
+        Log.trace(this.getClass(), "Successful connection on {}", clientID);
 
         clients.put(clientID, serverClient);
         serverClient.out().writeByte(ClientAccepted);
@@ -313,7 +320,9 @@ public class Server implements Runnable {
         for (BiConsumer<ServerClient, Map<UUID, ServerClient>> clientConnectAction : clientConnectActions) {
             clientConnectAction.accept(serverClient, getClients());
         }
+        Log.trace(this.getClass(), "Completed all connect actions for client {}. Adding listener...", clientID);
 
         clientManager.submit(() -> serverClient.listen(this));
+        Log.trace(this.getClass(), "Listener added to {}.", clientID);
     }
 }

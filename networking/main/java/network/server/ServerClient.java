@@ -76,11 +76,6 @@ public class ServerClient {
     }
 
     public void shutdown() {
-        if (socket.isClosed()) {
-            Log.warn(this.getClass(), "client {} already disconnected.", uuid);
-            return;
-        }
-
         try {
             socket.close();
         } catch (IOException exception) {
@@ -98,7 +93,7 @@ public class ServerClient {
             } catch (IOException exception) {
                 try {
                     if (in.read() == -1) {
-                        shutdown();
+                        server.removeClient(uuid);
                         break;
                     }
                 } catch (IOException exception1) {

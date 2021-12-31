@@ -162,7 +162,8 @@ public class Client implements Runnable {
             } catch (IOException exception) {
                 try {
                     if (in.read() == -1) {
-                        Log.info("client closed.");
+                        Log.debug("Connection closed.");
+                        shutdown();
                         break;
                     }
                 } catch (IOException exception1) {
