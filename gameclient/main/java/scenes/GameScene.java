@@ -1,4 +1,4 @@
-package scene;
+package scenes;
 
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
@@ -45,7 +45,7 @@ public class GameScene extends Scene implements FocusListener {
     private PlayerController playerController;
     private SnowballController snowballController;
     private HealthBar temperatureBar, hitDamageBar;
-    private int localPlayerNumber;
+    private int localPlayerNumber = -1;
     private Pointf canvasCenter;
     private boolean isDead;
 
@@ -53,8 +53,11 @@ public class GameScene extends Scene implements FocusListener {
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
     private ScheduledExecutorService transformSync;
 
-    public GameScene(int localPlayerNumber) {
+    public GameScene() {
         super(SceneNames.GameScene);
+    }
+
+    public void setLocalPlayerNumber(int localPlayerNumber) {
         this.localPlayerNumber = localPlayerNumber;
     }
 
@@ -120,8 +123,13 @@ public class GameScene extends Scene implements FocusListener {
     @Override
     public void unload(FastJCanvas canvas) {
         player = null;
-        localPlayerNumber = 0;
+        playerController = null;
+        snowballController = null;
+        temperatureBar = null;
+        hitDamageBar = null;
+        localPlayerNumber = -1;
         otherPlayers.clear();
+        otherPlayerTransforms.clear();
 
         if (transformSync != null) {
             transformSync.shutdownNow();

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import core.util.Networking;
 import network.server.Server;
@@ -17,6 +18,7 @@ public class ServerState {
 
     private final Map<UUID, Integer> idToPlayers = new HashMap<>();
     private final Map<Integer, ServerClient> players = new HashMap<>();
+    private final Map<Integer, AtomicBoolean> alivePlayers = new HashMap<>();
     private final Server server;
 
     private int newPlayerIncrement = 1;
@@ -34,6 +36,7 @@ public class ServerState {
 
             idToPlayers.put(addedClient.getId(), playerNumber);
             players.put(playerNumber, addedClient);
+            alivePlayers.put(playerNumber, new AtomicBoolean(true));
 
             // add new player to other clients
             for (ServerClient serverClient : allClients.values()) {
@@ -80,6 +83,7 @@ public class ServerState {
     void syncRemovePlayer(ServerClient removedClient, Map<UUID, ServerClient> otherClients) {
         int disconnectedPlayerNumber = idToPlayers.remove(removedClient.getId());
         players.remove(disconnectedPlayerNumber);
+        alivePlayers.remove(disconnectedPlayerNumber);
 
         for (ServerClient serverClient : otherClients.values()) {
             Log.debug(this.getClass(), "removing player {} from {}", disconnectedPlayerNumber, serverClient.getId());
@@ -298,6 +302,8 @@ public class ServerState {
                     }
                 }
             }
+
+            updatePlayerDeath(playerNumber, allClients);
         } catch (IOException exception) {
             if (tryRemoveClosedClient(currentClient)) {
                 Log.error(this.getClass(), "Server IO error", exception);
@@ -333,9 +339,40 @@ public class ServerState {
                     }
                 }
             }
+
+            updatePlayerDeath(playerNumber, allClients);
         } catch (IOException exception) {
             if (tryRemoveClosedClient(currentClient)) {
                 Log.error(this.getClass(), "Server IO error", exception);
+            }
+        }
+    }
+
+    private void updatePlayerDeath(int deadPlayer, Map<UUID, ServerClient> allClients) {
+        if (!alivePlayers.containsKey(deadPlayer)) {
+            Log.warn("Player {} was not found.", deadPlayer);
+            return;
+        }
+        alivePlayers.get(deadPlayer).set(false);
+        Log.info("" + alivePlayers.values().stream().filter(AtomicBoolean::get).count());
+
+        if (alivePlayers.values().stream().filter(AtomicBoolean::get).count() == 1) {
+            int alivePlayer = alivePlayers.entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue().get())
+                    .findFirst()
+                    .get()
+                    .getKey();
+            Log.info("only player {} alive", alivePlayer);
+
+            for (ServerClient serverClient : allClients.values()) {
+                try {
+                    serverClient.send(Networking.Client.PlayerWins, alivePlayer);
+                } catch (IOException exception) {
+                    if (tryRemoveClosedClient(serverClient)) {
+                        Log.error(this.getClass(), "Server IO error", exception);
+                    }
+                }
             }
         }
     }

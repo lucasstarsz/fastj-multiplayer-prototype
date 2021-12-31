@@ -16,7 +16,7 @@ import tech.fastj.systems.control.SimpleManager;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 
-import scene.GameScene;
+import scenes.GameScene;
 import util.FilePaths;
 import util.Tags;
 

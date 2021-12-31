@@ -25,5 +25,7 @@ public class Networking {
         public static final byte PlayerCreateSnowball = 6;
         public static final byte PlayerTemperatureDeath = 7;
         public static final byte PlayerHitDamageDeath = 8;
+        public static final byte PlayerWins = 9;
+        public static final byte ReloadGameState = 10;
     }
 }

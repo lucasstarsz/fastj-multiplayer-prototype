@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import core.util.Networking;
 import network.client.Client;
 import objects.Player;
-import scene.GameScene;
+import scenes.GameScene;
 
 public class SnowballController implements Behavior {
 
