@@ -129,7 +129,8 @@ public class Slider extends UIElement {
                     mininum,
                     maximum
             );
-            interactiveSliderObject.setTranslation(new Pointf(sliderPosition, 0f));
+            float interactiveSliderObjectWidth = interactiveSliderObject.getBound(Boundary.TopRight).x - interactiveSliderObject.getBound(Boundary.TopLeft).x;
+            interactiveSliderObject.setTranslation(new Pointf(sliderPosition - interactiveSliderObjectWidth / 2f, 0f));
             Log.info("{} {} {}", mouseLocation, sliderPosition, interactiveSliderObject.getTranslation());
             onActionEvents.forEach(action -> action.accept(mouseMotionEvent));
         }
