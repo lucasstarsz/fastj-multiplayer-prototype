@@ -65,7 +65,6 @@ public class PlayerController implements Behavior {
                     return;
                 }
 
-                isMoving = true;
                 Keys key = keyboardStateEvent.getKey();
                 if (key == Keys.W || key == Keys.A || key == Keys.S || key == Keys.D) {
                     keyPress(key);
@@ -78,7 +77,6 @@ public class PlayerController implements Behavior {
                     return;
                 }
 
-                isMoving = false;
                 Keys key = keyboardStateEvent.getKey();
                 if (key == Keys.W || key == Keys.A || key == Keys.S || key == Keys.D) {
                     keyRelease(key);
@@ -195,12 +193,9 @@ public class PlayerController implements Behavior {
 
     @Override
     public void update(GameObject player) {
-        if (transformPlayer(movement, rotation, (Player) player)) {
+        isMoving = transformPlayer(movement, rotation, (Player) player);
+        if (isMoving) {
             playerObserver.run();
-        }
-
-        if (!movement.equals(Pointf.origin()) || rotation != 0f) {
-            isMoving = false;
         }
     }
 
