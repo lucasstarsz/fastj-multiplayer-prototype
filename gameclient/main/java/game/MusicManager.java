@@ -1,7 +1,5 @@
 package game;
 
-import tech.fastj.math.Maths;
-
 import tech.fastj.systems.audio.AudioManager;
 import tech.fastj.systems.audio.StreamedAudio;
 
@@ -25,7 +23,7 @@ public class MusicManager {
         audio.add(trailblaze);
 
         FloatControl gain = trailblaze.gainControl();
-        float gainValue = Maths.denormalize(initialAudioLevel, gain.getMinimum(), gain.getMaximum());
+        float gainValue = 20f * (float) Math.log10(initialAudioLevel);
         gain.setValue(gainValue);
     }
 
@@ -38,11 +36,9 @@ public class MusicManager {
     }
 
     public void setMusicLevel(float audioLevel) {
-        FloatControl gain = trailblaze.gainControl();
-        float gainValue = Maths.denormalize(audioLevel, gain.getMinimum(), gain.getMaximum());
         for (StreamedAudio streamedAudio : audio) {
             streamedAudio.pause();
-            streamedAudio.gainControl().setValue(gainValue);
+            streamedAudio.gainControl().setValue(20f * (float) Math.log10(audioLevel));
             streamedAudio.resume();
         }
     }

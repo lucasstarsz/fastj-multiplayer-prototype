@@ -37,7 +37,7 @@ public class GameManager extends SceneManager {
 
     @Override
     public void init(FastJCanvas canvas) {
-        canvas.setBackgroundColor(Colors.Snowy.darker());
+        canvas.setBackgroundColor(Colors.SnowyBlue.darker());
         canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
 
         musicManager = new MusicManager(MusicManager.InitialAudioLevel);

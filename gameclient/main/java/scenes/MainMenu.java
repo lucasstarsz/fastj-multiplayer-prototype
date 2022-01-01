@@ -117,6 +117,11 @@ public class MainMenu extends Scene {
                 FastJEngine.<GameManager>getLogicManager().runClient();
             } catch (IOException exception) {
                 connectingDialog.setVisible(false);
+                Client client = FastJEngine.<GameManager>getLogicManager().getClient();
+                if (client != null) {
+                    client.shutdown();
+                    FastJEngine.<GameManager>getLogicManager().setClient(null);
+                }
 
                 if (exception instanceof ConnectException && exception.getMessage().startsWith("Connection refused: connect")) {
                     String closedHostname = hostname;
@@ -143,12 +148,16 @@ public class MainMenu extends Scene {
                     });
                     return;
                 }
-                ClientMain.displayException("IO/Certificate Configuration error", exception);
-                FastJEngine.forceCloseGame();
+                ClientMain.displayException("IO error", exception);
             } catch (GeneralSecurityException exception) {
                 connectingDialog.setVisible(false);
-                ClientMain.displayException("IO/Certificate Configuration error", exception);
-                FastJEngine.forceCloseGame();
+                Client client = FastJEngine.<GameManager>getLogicManager().getClient();
+                if (client != null) {
+                    client.shutdown();
+                    FastJEngine.<GameManager>getLogicManager().setClient(null);
+                }
+
+                ClientMain.displayException("Certificate Configuration error", exception);
             }
         }));
         drawableManager.addUIElement(joinMultiplayerButton);

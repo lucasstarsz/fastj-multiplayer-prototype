@@ -34,7 +34,7 @@ public class Slider extends UIElement {
     private final Polygon2D sliderBase;
     private final Polygon2D interactiveSliderObject;
     private final List<Consumer<MouseMotionEvent>> onActionEvents;
-    private float mininum, maximum;
+    private final float mininum, maximum;
 
     private float sliderPosition;
     private EventCondition onActionCondition;
