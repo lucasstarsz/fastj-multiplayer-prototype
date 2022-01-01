@@ -64,6 +64,7 @@ public class SnowballController implements Behavior {
 
                         if (snowballCount < 1) {
                             Log.debug("player {} doesn't have any snowballs to throw!", player.getPlayerNumber());
+                            return;
                         }
 
                         FastJEngine.runAfterUpdate(() -> {

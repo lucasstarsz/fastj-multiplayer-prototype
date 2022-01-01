@@ -21,7 +21,7 @@ public class ClientMain {
         try {
             FastJEngine.init("Game", new GameManager());
             FastJEngine.configureLogging(LogLevel.Debug);
-            FastJEngine.configureExceptionAction(ExceptionAction.LogError);
+            FastJEngine.configureExceptionAction(ExceptionAction.Throw);
             FastJEngine.run();
         } catch (Exception exception) {
             if (FastJEngine.isRunning()) {

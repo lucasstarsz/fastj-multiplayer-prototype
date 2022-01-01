@@ -11,7 +11,7 @@ import util.FilePaths;
 
 public class MusicManager {
 
-    public static final float InitialAudioLevel = 0.7f;
+    public static final float InitialAudioLevel = 0.35f;
 
     private final List<StreamedAudio> audio;
     private final StreamedAudio trailblaze;

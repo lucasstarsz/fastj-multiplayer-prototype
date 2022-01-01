@@ -25,6 +25,7 @@ import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 
+import core.util.FilePathUtil;
 import core.util.Networking;
 import game.ClientMain;
 import game.GameManager;
@@ -96,7 +97,7 @@ public class MainMenu extends Scene {
                 FastJEngine.<GameManager>getLogicManager().setClient(new Client(
                         new ClientConfig(hostname, Networking.Port),
                         new SecureServerConfig(
-                                FilePaths.PublicGameKey,
+                                FilePathUtil.streamResource(FilePaths.class, FilePaths.PublicGameKey),
                                 "sslpublicpassword",
                                 SecureTypes.TLSv1_3
                         )

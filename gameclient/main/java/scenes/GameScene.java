@@ -257,7 +257,7 @@ public class GameScene extends Scene implements FocusListener {
     }
 
     public void playerTakeTempDamage() {
-        if (isDead) {
+        if (isDead || otherPlayers.values().size() < 1) {
             return;
         }
 

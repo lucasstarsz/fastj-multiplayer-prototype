@@ -196,9 +196,15 @@ public class GameManager extends SceneManager {
                                     .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
                                     .build()
                     );
-                    getCurrentScene().unload(FastJEngine.getCanvas());
-                    switchScenes(SceneNames.MainMenu);
-                    client.shutdown();
+                    try {
+                        getScene(SceneNames.GameScene).reset();
+                        getScene(SceneNames.GameScene).unload(FastJEngine.getCanvas());
+                        switchScenes(SceneNames.MainMenu);
+                        getClient().shutdown();
+                        setClient(null);
+                    } catch (Exception exception) {
+                        ClientMain.displayException("Tried switching back to main menu, but somehow failed?", exception);
+                    }
                 });
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerWins data", exception);

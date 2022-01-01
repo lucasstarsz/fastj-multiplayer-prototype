@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
+import core.util.FilePathUtil;
 import core.util.Networking;
 import network.security.SecureServerConfig;
 import network.security.SecureTypes;
@@ -19,17 +21,16 @@ public class GameServer implements Runnable {
 
     private final Server server;
     private final ServerState serverState;
+    private final ServerConfig serverConfig = new ServerConfig(Networking.Port);
 
     public GameServer() throws IOException, GeneralSecurityException {
-        ServerConfig serverConfig = new ServerConfig(Networking.Port);
         SecureServerConfig secureServerConfig = new SecureServerConfig(
-                FilePaths.PrivateGameKey,
+                FilePathUtil.streamResource(FilePaths.class, FilePaths.PrivateGameKey),
                 "sslprivatepassword",
                 SecureTypes.TLSv1_3
         );
-
         server = new Server(serverConfig, secureServerConfig);
-        serverState = new ServerState(server);
+        serverState = new ServerState(server, this);
         setupClientActions();
     }
 
@@ -52,6 +53,15 @@ public class GameServer implements Runnable {
         } else {
             server.allowClients();
         }
+    }
+
+    void resetServer(AtomicReference<Server> server) throws GeneralSecurityException, IOException {
+        SecureServerConfig secureServerConfig = new SecureServerConfig(
+                FilePathUtil.streamResource(FilePaths.class, FilePaths.PrivateGameKey),
+                "sslprivatepassword",
+                SecureTypes.TLSv1_3
+        );
+        server.get().reset(serverConfig, secureServerConfig);
     }
 
     @Override

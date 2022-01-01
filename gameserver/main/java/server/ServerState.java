@@ -5,10 +5,12 @@ import tech.fastj.logging.Log;
 import tech.fastj.input.keyboard.Keys;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import core.util.Networking;
 import network.server.Server;
@@ -19,12 +21,15 @@ public class ServerState {
     private final Map<UUID, Integer> idToPlayers = new HashMap<>();
     private final Map<Integer, ServerClient> players = new HashMap<>();
     private final Map<Integer, AtomicBoolean> alivePlayers = new HashMap<>();
+    private boolean isMatchRunning = false;
     private final Server server;
+    private final GameServer gameServer;
 
     private int newPlayerIncrement = 1;
 
-    public ServerState(Server server) {
+    public ServerState(Server server, GameServer gameServer) {
         this.server = server;
+        this.gameServer = gameServer;
     }
 
     void syncAddPlayer(ServerClient addedClient, Map<UUID, ServerClient> allClients) {
@@ -78,6 +83,10 @@ public class ServerState {
                 Log.error(this.getClass(), "Server IO error", exception);
             }
         }
+
+        if (players.values().size() > 1) {
+            isMatchRunning = true;
+        }
     }
 
     void syncRemovePlayer(ServerClient removedClient, Map<UUID, ServerClient> otherClients) {
@@ -95,6 +104,14 @@ public class ServerState {
                     Log.error(this.getClass(), "Server IO error", exception);
                 }
             }
+        }
+
+        if (players.values().size() < 2) {
+            isMatchRunning = false;
+        }
+
+        if (players.values().size() == 0) {
+            resetServerState();
         }
     }
 
@@ -359,6 +376,10 @@ public class ServerState {
     }
 
     void checkWinCondition(Map<UUID, ServerClient> allClients) {
+        if (!isMatchRunning) {
+            return;
+        }
+
         if (alivePlayers.values().stream().filter(AtomicBoolean::get).count() == 1) {
             int alivePlayer = alivePlayers.entrySet()
                     .stream()
@@ -367,6 +388,8 @@ public class ServerState {
                     .get()
                     .getKey();
             Log.info("Only player {} is alive.", alivePlayer);
+            server.disallowClients();
+            isMatchRunning = false;
 
             for (ServerClient serverClient : allClients.values()) {
                 try {
@@ -377,6 +400,19 @@ public class ServerState {
                     }
                 }
             }
+
+            try {
+                gameServer.resetServer(new AtomicReference<>(server));
+            } catch (GeneralSecurityException | IOException e) {
+                e.printStackTrace();
+            }
         }
+    }
+
+    private void resetServerState() {
+        players.clear();
+        idToPlayers.clear();
+        alivePlayers.clear();
+        newPlayerIncrement = 1;
     }
 }

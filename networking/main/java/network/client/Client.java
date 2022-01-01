@@ -2,7 +2,6 @@ package network.client;
 
 import tech.fastj.logging.Log;
 
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -30,22 +29,29 @@ public class Client implements Runnable {
     }};
 
     public Client(ClientConfig clientConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        Log.info("trying to connect...");
         socket = SecureSocketFactory.getSocket(clientConfig, secureServerConfig);
 
-        SSLParameters parameters = new SSLParameters();
-        parameters.setEndpointIdentificationAlgorithm("HTTPS");
-        socket.setSSLParameters(parameters);
+//        SSLParameters parameters = new SSLParameters();
+//        parameters.setEndpointIdentificationAlgorithm("HTTPS");
+//        socket.setSSLParameters(parameters);
 
+        Log.info("somehow connected. starting handshake...");
         socket.startHandshake();
+        Log.info("handshake started. get out");
 
         out = new ObjectOutputStream(socket.getOutputStream());
+        Log.info("get in");
         in = new ObjectInputStream(socket.getInputStream());
+        Log.info("flush");
         out.flush();
+        Log.info("and last but not least, read connection status.");
         byte connectionStatus = in.readByte();
         if (connectionStatus != Server.ClientAccepted) {
             socket.close();
             throw new IOException("Bad connection status: " + connectionStatus);
         }
+        Log.info("and that's all there is to it.");
     }
 
     public boolean isConnectionClosed() {

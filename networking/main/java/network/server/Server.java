@@ -35,7 +35,7 @@ public class Server implements Runnable {
         Log.debug(this.getClass(), "Disconnected {}", client.getId());
     });
 
-    private final SSLServerSocket server;
+    private SSLServerSocket server;
     private final ExecutorService commandInterpreter;
 
     private final LinkedHashMap<UUID, ServerClient> clients;
@@ -50,7 +50,7 @@ public class Server implements Runnable {
     private volatile boolean isAcceptingClients;
 
     public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig, Certificate certificate, String alias) throws IOException, GeneralSecurityException {
-        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig, certificate, alias);
+        reset(serverConfig, secureServerConfig, certificate, alias);
 
         clients = new LinkedHashMap<>(5, 1.0f, false);
         clientConnectActions = new ArrayList<>();
@@ -65,7 +65,7 @@ public class Server implements Runnable {
     }
 
     public Server(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
-        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
+        reset(serverConfig, secureServerConfig);
 
         clients = new LinkedHashMap<>(5, 1.0f, false);
         clientConnectActions = new ArrayList<>();
@@ -80,7 +80,7 @@ public class Server implements Runnable {
     }
 
     public Server(ServerConfig serverConfig) throws IOException {
-        server = SecureServerSocketFactory.getDefault(serverConfig);
+        reset(serverConfig);
 
         clients = new LinkedHashMap<>(5, 1.0f, false);
         clientConnectActions = new ArrayList<>();
@@ -92,6 +92,39 @@ public class Server implements Runnable {
         serverCommandActions.put(StopServer, shutdownCommand);
         clientAccepter = Executors.newWorkStealingPool();
         commandInterpreter = Executors.newSingleThreadExecutor();
+    }
+
+    public void reset(ServerConfig serverConfig, SecureServerConfig secureServerConfig, Certificate certificate, String alias) throws IOException, GeneralSecurityException {
+        if (isAcceptingClients) {
+            Log.warn(this.getClass(), "Cannot reset server socket while clients are being accepted.");
+        }
+        if (server != null) {
+            server.close();
+        }
+
+        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig, certificate, alias);
+    }
+
+    public void reset(ServerConfig serverConfig, SecureServerConfig secureServerConfig) throws IOException, GeneralSecurityException {
+        if (isAcceptingClients) {
+            Log.warn(this.getClass(), "Cannot reset server socket while clients are being accepted.");
+        }
+        if (server != null) {
+            server.close();
+        }
+
+        server = SecureServerSocketFactory.getServerSocket(serverConfig, secureServerConfig);
+    }
+
+    public void reset(ServerConfig serverConfig) throws IOException {
+        if (isAcceptingClients) {
+            Log.warn(this.getClass(), "Cannot reset server socket while clients are being accepted.");
+        }
+        if (server != null) {
+            server.close();
+        }
+
+        server = SecureServerSocketFactory.getDefault(serverConfig);
     }
 
     public Map<UUID, ServerClient> getClients() {
@@ -251,6 +284,7 @@ public class Server implements Runnable {
             clientAccepter = Executors.newSingleThreadExecutor();
         }
         clientAccepter.submit(this::acceptClients);
+        isAcceptingClients = true;
     }
 
     public void disallowClients() {
@@ -260,11 +294,13 @@ public class Server implements Runnable {
         }
 
         if (!isAcceptingClients) {
-            Log.warn(this.getClass(), "Server not accepting clients.");
+            Log.warn(this.getClass(), "Server already not accepting clients.");
             return;
         }
 
         clientAccepter.shutdownNow();
+        isAcceptingClients = false;
+        Log.warn(this.getClass(), "Server no longer accepting clients.");
     }
 
     private void interpretCommands() {
@@ -284,7 +320,6 @@ public class Server implements Runnable {
     }
 
     private void acceptClients() {
-        isAcceptingClients = true;
         Log.info(this.getClass(), "Now accepting clients...");
 
         if (clientManager != null) {

@@ -45,6 +45,8 @@ jlink {
         def iconPath = '../project-resources/fastj_icon'
         def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
+        addExtraDependencies("slf4j")
+
         installerOptions += [
                 '--description', project.description,
                 '--vendor', project.group,
