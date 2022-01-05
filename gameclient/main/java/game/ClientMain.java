@@ -14,6 +14,7 @@ import java.awt.Font;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import util.Dialogs;
 import util.Fonts;
 
 public class ClientMain {
@@ -53,12 +54,11 @@ public class ClientMain {
         textArea.setEditable(false);
         textArea.setFont(Fonts.notoSansMono(Font.BOLD, 13));
 
-        DialogConfig exceptionConfig = DialogConfig.create()
-                .withParentComponent(null)
-                .withTitle(exception.getClass().getName() + ": " + message)
+        Dialogs.message(DialogConfig.create().withParentComponent(null)
+                .withTitle(exception.getClass().getName() + (message != null ? (": " + message) : ""))
                 .withPrompt(textArea)
-                .build();
-        DialogUtil.showMessageDialog(exceptionConfig);
+                .build()
+        );
     }
 
     private static String formatStackTrace(Throwable exception) {

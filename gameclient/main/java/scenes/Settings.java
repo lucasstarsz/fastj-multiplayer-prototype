@@ -1,7 +1,6 @@
 package scenes;
 
 import tech.fastj.engine.FastJEngine;
-import tech.fastj.logging.Log;
 import tech.fastj.math.Pointf;
 import tech.fastj.math.Transform2D;
 import tech.fastj.graphics.Boundary;
@@ -22,8 +21,10 @@ import game.MusicManager;
 import ui.ArrowedButton;
 import ui.Slider;
 import util.Colors;
+import util.Drawables;
 import util.Fonts;
 import util.SceneNames;
+import util.Scenes;
 import util.Sizes;
 
 public class Settings extends Scene {
@@ -62,7 +63,7 @@ public class Settings extends Scene {
 
     @Override
     public void load(FastJCanvas canvas) {
-        musicLevel = new Slider(this, Sizes.SliderSize) {
+        musicLevel = new Slider(this, Sizes.NormalSlider) {
             @Override
             public void onMouseReleased(MouseButtonEvent mouseButtonEvent) {
                 MusicManager musicManager = FastJEngine.<GameManager>getLogicManager().getMusicManager();
@@ -74,82 +75,83 @@ public class Settings extends Scene {
         musicLevel.translate(musicLevel.getCenter().subtract(musicLevel.getTranslation()).multiply(-1f));
         drawableManager.addUIElement(musicLevel);
 
-        musicSliderText = Text2D.create("Music Volume")
+        musicSliderText = Drawables.centered(Text2D.create("Music Volume")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(musicLevel.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
-                .build();
+                .build()
+        );
         musicSliderText.translate(new Pointf(
                 -musicSliderText.getBound(Boundary.TopRight).subtract(musicSliderText.getBound(Boundary.TopLeft)).x / 1.5f,
                 musicSliderText.getBound(Boundary.BottomRight).subtract(musicSliderText.getBound(Boundary.TopRight)).y / 1.5f
         ));
-        musicSliderText.translate(musicSliderText.getCenter().subtract(musicSliderText.getTranslation()).multiply(-1f));
-        Log.info(musicSliderText.toString());
         drawableManager.addGameObject(musicSliderText);
 
-        antialiasButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButtonSize, AntialiasOptionsList, 0);
+        antialiasButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButton, AntialiasOptionsList, 0);
         antialiasButton.translate(canvas.getCanvasCenter().subtract(0f, canvas.getCanvasCenter().y / 3f));
         antialiasButton.translate(antialiasButton.getCenter().subtract(antialiasButton.getTranslation()).multiply(-1f));
         antialiasButton.setFill(Colors.Snowy);
         antialiasButton.addOnAction(mouseButtonEvent -> {
-            Log.info("{} {}", antialiasButton.getSelectedOption(), AntialiasArrowMap.get(antialiasButton.getSelectedOption()));
             RenderSettings renderSetting = AntialiasOptions.get(AntialiasArrowMap.get(antialiasButton.getSelectedOption()));
             canvas.modifyRenderSettings(renderSetting);
         });
         drawableManager.addUIElement(antialiasButton);
 
-        antialiasText = Text2D.create("Antialiasing")
+        antialiasText = Drawables.centered(Text2D.create("Antialiasing")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(antialiasButton.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
-                .build();
+                .build()
+        );
         antialiasText.translate(new Pointf(
                 -antialiasText.getBound(Boundary.TopRight).subtract(antialiasText.getBound(Boundary.TopLeft)).x,
                 antialiasText.getBound(Boundary.BottomRight).subtract(antialiasText.getBound(Boundary.TopRight)).y / 1.5f
         ));
-        antialiasText.translate(antialiasText.getCenter().subtract(antialiasText.getTranslation()).multiply(-1f));
-        Log.info(antialiasText.toString());
         drawableManager.addGameObject(antialiasText);
 
-        alphaInterpolationButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButtonSize, AlphaInterpolationOptionsList, 0);
+        alphaInterpolationButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButton, AlphaInterpolationOptionsList, 0);
         alphaInterpolationButton.translate(canvas.getCanvasCenter().add(0f, -canvas.getCanvasCenter().y / 6f));
         alphaInterpolationButton.translate(alphaInterpolationButton.getCenter().subtract(alphaInterpolationButton.getTranslation()).multiply(-1f));
         alphaInterpolationButton.setFill(Colors.Snowy);
         alphaInterpolationButton.addOnAction(mouseButtonEvent -> {
-            Log.info("{} {}", alphaInterpolationButton.getSelectedOption(), AlphaInterpolationArrowMap.get(alphaInterpolationButton.getSelectedOption()));
             RenderSettings renderSetting = AlphaInterpolationOptions.get(AlphaInterpolationArrowMap.get(alphaInterpolationButton.getSelectedOption()));
             canvas.modifyRenderSettings(renderSetting);
         });
         drawableManager.addUIElement(alphaInterpolationButton);
 
-        alphaInterpolationText = Text2D.create("Alpha Interpolation")
+        alphaInterpolationText = Drawables.centered(Text2D.create("Alpha Interpolation")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(alphaInterpolationButton.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
-                .build();
+                .build()
+        );
         alphaInterpolationText.translate(new Pointf(
                 -alphaInterpolationText.getBound(Boundary.TopRight).subtract(alphaInterpolationText.getBound(Boundary.TopLeft)).x * 0.75f,
                 alphaInterpolationText.getBound(Boundary.BottomRight).subtract(alphaInterpolationText.getBound(Boundary.TopRight)).y / 1.5f
         ));
-        alphaInterpolationText.translate(alphaInterpolationText.getCenter().subtract(alphaInterpolationText.getTranslation()).multiply(-1f));
-        Log.info(alphaInterpolationText.toString());
         drawableManager.addGameObject(alphaInterpolationText);
 
 
-        backToMainMenuButton = new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.5f), Sizes.ButtonSize);
-        backToMainMenuButton.setFill(Colors.Snowy);
-        backToMainMenuButton.setText("Back to Main Menu");
-        backToMainMenuButton.setFont(Fonts.ButtonTextFont);
-        backToMainMenuButton.translate(backToMainMenuButton.getCenter().subtract(backToMainMenuButton.getTranslation()).multiply(-1f));
-        backToMainMenuButton.addOnAction(mouseButtonEvent -> FastJEngine.runAfterUpdate(() -> {
-            GameManager gameManager = FastJEngine.getLogicManager();
-            gameManager.switchScenes(SceneNames.MainMenu);
-        }));
+        backToMainMenuButton = Drawables.centered(new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.5f), Sizes.NormalButton)
+                .setFill(Colors.Snowy)
+                .setText("Back to Main Menu")
+                .setFont(Fonts.ButtonTextFont)
+        );
+        backToMainMenuButton.addOnAction(mouseButtonEvent -> Scenes.switchScene(SceneNames.MainMenu, false));
         drawableManager.addUIElement(backToMainMenuButton);
     }
 
     @Override
     public void unload(FastJCanvas canvas) {
+        musicLevel = null;
+        musicSliderText = null;
+        backToMainMenuButton = null;
+
+        antialiasButton = null;
+        antialiasText = null;
+
+        alphaInterpolationButton = null;
+        alphaInterpolationText = null;
     }
 
     @Override

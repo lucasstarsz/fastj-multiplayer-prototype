@@ -4,7 +4,6 @@ import tech.fastj.engine.FastJEngine;
 import tech.fastj.logging.Log;
 import tech.fastj.math.Pointf;
 import tech.fastj.graphics.dialog.DialogConfig;
-import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
 import tech.fastj.graphics.display.RenderSettings;
 import tech.fastj.graphics.display.SimpleDisplay;
@@ -21,14 +20,13 @@ import scenes.GameScene;
 import scenes.MainMenu;
 import scenes.Settings;
 import util.Colors;
+import util.Dialogs;
 import util.SceneNames;
+import util.Scenes;
 
 public class GameManager extends SceneManager {
 
     private Client client;
-    private GameScene gameScene;
-    private MainMenu mainMenu;
-    private Settings settings;
     private MusicManager musicManager;
 
     public Client getClient() {
@@ -42,9 +40,9 @@ public class GameManager extends SceneManager {
 
         musicManager = new MusicManager(MusicManager.InitialAudioLevel);
 
-        mainMenu = new MainMenu();
-        settings = new Settings();
-        gameScene = new GameScene();
+        MainMenu mainMenu = new MainMenu();
+        Settings settings = new Settings();
+        GameScene gameScene = new GameScene();
         addScene(mainMenu);
         addScene(settings);
         addScene(gameScene);
@@ -67,10 +65,7 @@ public class GameManager extends SceneManager {
         super.reset();
         if (client != null && !client.isConnectionClosed()) {
             client.shutdown();
-        }
-        if (musicManager != null) {
-            musicManager.pauseMainMusic();
-            musicManager.unloadAll();
+            client = null;
         }
     }
 
@@ -87,20 +82,24 @@ public class GameManager extends SceneManager {
             try {
                 int newPlayerNumber = client.in().readInt();
                 Log.debug(GameManager.class, "Adding other player {}", newPlayerNumber);
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.addNewPlayer(newPlayerNumber);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive AddPlayer data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.RemovePlayer, client -> {
             try {
                 int removedPlayerNumber = client.in().readInt();
                 Log.debug(GameManager.class, "Removing other player {}", removedPlayerNumber);
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.removePlayer(removedPlayerNumber);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive RemovePlayer data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.PlayerSyncTransform, client -> {
@@ -110,10 +109,12 @@ public class GameManager extends SceneManager {
                 float translationY = client.in().readFloat();
                 float rotation = client.in().readFloat();
                 Log.debug(GameManager.class, "Syncing player {} to {} {} {}", syncPlayerNumber, translationX, translationY, rotation);
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.syncOtherPlayer(syncPlayerNumber, translationX, translationY, rotation);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive SyncPlayer data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.PlayerKeyPress, client -> {
@@ -123,10 +124,12 @@ public class GameManager extends SceneManager {
                 key = client.in().readUTF();
                 Keys keyPressed = Keys.valueOf(key);
                 Log.debug(GameManager.class, "player {} pressed {}", player, keyPressed.name());
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.transformOtherPlayer(player, keyPressed, true);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerKeyPress data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             } catch (IllegalArgumentException exception) {
                 Log.warn(GameManager.class, "Invalid identifier press {} from player {}", key, playerNumber);
             }
@@ -138,10 +141,12 @@ public class GameManager extends SceneManager {
                 key = client.in().readUTF();
                 Keys keyReleased = Keys.valueOf(key);
                 Log.debug(GameManager.class, "player {} released {}", player, keyReleased.name());
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.transformOtherPlayer(player, keyReleased, false);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerKeyRelease data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             } catch (IllegalArgumentException exception) {
                 Log.warn(GameManager.class, "Invalid identifier release {} from player {}", key, playerNumber);
             }
@@ -154,10 +159,12 @@ public class GameManager extends SceneManager {
                 float rotation = client.in().readFloat();
                 Pointf trajectory = new Pointf(trajectoryX, trajectoryY);
                 Log.debug(GameManager.class, "player {} spawned a snowball headed to {} with rotation {}", player, trajectory, rotation);
+
+                GameScene gameScene = getScene(SceneNames.GameScene);
                 gameScene.spawnSnowball(player, trajectory, rotation);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerCreateSnowball data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.PlayerTemperatureDeath, client -> {
@@ -171,7 +178,7 @@ public class GameManager extends SceneManager {
                 }
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerTemperatureDeath data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.PlayerHitDamageDeath, client -> {
@@ -181,7 +188,7 @@ public class GameManager extends SceneManager {
                 Log.info("Player {} was snowballed by player {}", player, otherPlayer);
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerHitDamageDeath data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
         client.addServerAction(Networking.Client.PlayerWins, client -> {
@@ -189,26 +196,16 @@ public class GameManager extends SceneManager {
                 int player = client.in().readInt();
                 Log.info("we need to show player message dialog");
                 SwingUtilities.invokeLater(() -> {
-                    DialogUtil.showMessageDialog(
-                            DialogConfig.create()
-                                    .withTitle(player == playerNumber ? "Win" : "Loss")
-                                    .withPrompt(player == playerNumber ? "You win!" : String.format("Player %s wins! You'll get 'em next time.", player))
-                                    .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
-                                    .build()
+                    Dialogs.message(DialogConfig.create().withTitle(player == playerNumber ? "Win" : "Loss")
+                            .withPrompt(player == playerNumber ? "You win!" : String.format("Player %s wins! You'll get 'em next time.", player))
+                            .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
+                            .build()
                     );
-                    try {
-                        getScene(SceneNames.GameScene).reset();
-                        getScene(SceneNames.GameScene).unload(FastJEngine.getCanvas());
-                        switchScenes(SceneNames.MainMenu);
-                        getClient().shutdown();
-                        setClient(null);
-                    } catch (Exception exception) {
-                        ClientMain.displayException("Tried switching back to main menu, but somehow failed?", exception);
-                    }
+                    Scenes.switchScene(SceneNames.MainMenu, true);
                 });
             } catch (IOException exception) {
                 ClientMain.displayException("Couldn't receive PlayerWins data", exception);
-                FastJEngine.closeGame();
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
         });
     }

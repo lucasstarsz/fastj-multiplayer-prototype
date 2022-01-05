@@ -5,7 +5,6 @@ import tech.fastj.logging.Log;
 import tech.fastj.math.Pointf;
 import tech.fastj.math.Transform2D;
 import tech.fastj.graphics.dialog.DialogConfig;
-import tech.fastj.graphics.dialog.DialogUtil;
 import tech.fastj.graphics.display.FastJCanvas;
 import tech.fastj.graphics.game.Polygon2D;
 import tech.fastj.graphics.util.DrawUtil;
@@ -25,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import core.util.Networking;
+import game.ClientMain;
 import game.GameManager;
 import network.client.Client;
 import objects.Player;
@@ -34,9 +34,11 @@ import scripts.SnowballController;
 import ui.HealthBar;
 import ui.PercentageBox;
 import ui.StatusBox;
+import util.Dialogs;
 import util.FilePaths;
 import util.Fonts;
 import util.SceneNames;
+import util.Scenes;
 import util.Tags;
 
 import static scripts.PlayerController.MovementSpeed;
@@ -132,17 +134,15 @@ public class GameScene extends Scene implements FocusListener {
             );
         } catch (IOException exception) {
             if (client.isConnectionClosed()) {
-                DialogUtil.showMessageDialog(
-                        DialogConfig.create()
-                                .withParentComponent(FastJEngine.getDisplay().getWindow())
-                                .withPrompt("Server connection closed. Session ended.")
-                                .build()
+                Dialogs.message(DialogConfig.create().withTitle("Server Closed")
+                        .withParentComponent(FastJEngine.getDisplay().getWindow())
+                        .withPrompt("Server connection closed. Session ended.")
+                        .build()
                 );
             } else {
-                Log.error(GameScene.class, "couldn't sync transform, disconnecting client", exception);
-                client.shutdown();
+                ClientMain.displayException("Couldn't sync player transform, disconnecting client", exception);
+                Scenes.switchScene(SceneNames.MainMenu, true);
             }
-            FastJEngine.closeGame();
         }
     }
 
@@ -294,7 +294,8 @@ public class GameScene extends Scene implements FocusListener {
                 client.send(Networking.Server.HitDamageDeath, localPlayerNumber, otherPlayerNumber);
             }
         } catch (IOException exception) {
-            FastJEngine.error("Couldn't send player death.", exception);
+            ClientMain.displayException("Couldn't sync player death, disconnecting client", exception);
+            Scenes.switchScene(SceneNames.MainMenu, true);
         }
     }
 
@@ -312,7 +313,8 @@ public class GameScene extends Scene implements FocusListener {
             Client client = FastJEngine.<GameManager>getLogicManager().getClient();
             client.send(Networking.Server.TemperatureDeath, localPlayerNumber, Integer.MIN_VALUE);
         } catch (IOException exception) {
-            FastJEngine.error("Couldn't send player death.", exception);
+            ClientMain.displayException("Couldn't sync player death, disconnecting client", exception);
+            Scenes.switchScene(SceneNames.MainMenu, true);
         }
     }
 }
