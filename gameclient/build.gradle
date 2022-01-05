@@ -40,6 +40,8 @@ jlink {
         noConsole = false
     }
 
+    forceMerge('slf4j-api', 'slf4j-simple')
+
     jpackage {
 
         def iconPath = '../project-resources/fastj_icon'
