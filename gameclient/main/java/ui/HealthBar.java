@@ -18,6 +18,7 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.util.Objects;
 
 import util.FilePaths;
 
@@ -60,6 +61,10 @@ public class HealthBar extends UIElement {
 
     public int getHealthRemaining() {
         return healthRemaining;
+    }
+
+    public int getMaxHealth() {
+        return maxHealth;
     }
 
     public boolean modifyHealthRemaining(int healthModifier) {
@@ -107,5 +112,22 @@ public class HealthBar extends UIElement {
     @Override
     public void destroy(SimpleManager origin) {
         super.destroyTheRest(origin);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        HealthBar healthBar = (HealthBar) o;
+        return maxHealth == healthBar.maxHealth && healthRemaining == healthBar.healthRemaining && healthModel.equals(healthBar.healthModel) && healthText.equals(healthBar.healthText);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maxHealth, healthRemaining, healthModel, healthText);
     }
 }

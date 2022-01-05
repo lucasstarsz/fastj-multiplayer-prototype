@@ -23,7 +23,7 @@ import scenes.GameScene;
 
 public class SnowballController implements Behavior {
 
-    private static final int MaxSnowballsCarried = 5;
+    public static final int MaxSnowballsCarried = 5;
     private static final int SnowballMakeCooldown = 1000;
     private static final int SnowballThrowCooldown = 500;
 
@@ -32,20 +32,23 @@ public class SnowballController implements Behavior {
 
     private ScheduledExecutorService cooldownManager;
     private int snowballCount;
-    private volatile int currentSnowballMakeCooldown;
-    private volatile int currentSnowballThrowCooldown;
+    private volatile boolean currentSnowballMakeCooldown;
+    private volatile boolean currentSnowballThrowCooldown;
     private KeyboardActionListener keyListener;
+    private final Runnable snowballUpdater;
 
-    public SnowballController(GameScene scene, Client client) {
+    public SnowballController(GameScene scene, Client client, Runnable snowballUpdate) {
         this.scene = scene;
         this.client = client;
+        this.snowballUpdater = snowballUpdate;
     }
 
     @Override
     public void init(GameObject gameObject) {
         this.snowballCount = 0;
-        this.currentSnowballMakeCooldown = 0;
-        this.currentSnowballThrowCooldown = 0;
+        this.currentSnowballMakeCooldown = true;
+        this.currentSnowballThrowCooldown = true;
+        snowballUpdater.run();
         this.cooldownManager = Executors.newScheduledThreadPool(2);
 
         keyListener = new KeyboardActionListener() {
@@ -57,7 +60,7 @@ public class SnowballController implements Behavior {
 
                 if (gameObject instanceof Player player) {
                     if (keyboardStateEvent.getKey() == Keys.Space) {
-                        if (currentSnowballThrowCooldown > 0 || currentSnowballMakeCooldown > 0) {
+                        if (!currentSnowballThrowCooldown) {
                             Log.debug(GameScene.class, "player {} is still on cooldown.", player.getPlayerNumber());
                             return;
                         }
@@ -75,6 +78,7 @@ public class SnowballController implements Behavior {
                                 scene.spawnSnowball(player, trajectory, playerRotation);
                                 snowballCount--;
                                 snowballThrowCooldown();
+                                snowballUpdater.run();
                             } catch (IOException exception) {
                                 FastJEngine.error("IO error", exception);
                             }
@@ -82,13 +86,12 @@ public class SnowballController implements Behavior {
                     }
 
                     if (keyboardStateEvent.getKey() == Keys.R) {
-                        if (currentSnowballThrowCooldown > 0 || currentSnowballMakeCooldown > 0) {
+                        if (!currentSnowballMakeCooldown) {
                             Log.debug(GameScene.class, "player {} is still on cooldown.", player.getPlayerNumber());
                             return;
                         }
 
                         createSnowball(player);
-                        snowballMakeCooldown();
                     }
                 }
             }
@@ -97,19 +100,25 @@ public class SnowballController implements Behavior {
     }
 
     private void snowballMakeCooldown() {
-        currentSnowballMakeCooldown = SnowballMakeCooldown;
+        currentSnowballMakeCooldown = false;
         cooldownManager.schedule(
-                () -> currentSnowballMakeCooldown = 0,
-                currentSnowballMakeCooldown,
+                () -> {
+                    currentSnowballMakeCooldown = true;
+                    snowballUpdater.run();
+                },
+                SnowballMakeCooldown,
                 TimeUnit.MILLISECONDS
         );
     }
 
     private void snowballThrowCooldown() {
-        currentSnowballThrowCooldown = SnowballThrowCooldown;
+        currentSnowballThrowCooldown = false;
         cooldownManager.schedule(
-                () -> currentSnowballThrowCooldown = 0,
-                currentSnowballThrowCooldown,
+                () -> {
+                    currentSnowballThrowCooldown = true;
+                    snowballUpdater.run();
+                },
+                SnowballThrowCooldown,
                 TimeUnit.MILLISECONDS
         );
     }
@@ -121,7 +130,21 @@ public class SnowballController implements Behavior {
         }
 
         snowballCount++;
+        snowballMakeCooldown();
+        snowballUpdater.run();
         Log.debug(GameScene.class, "player {} created a snowball.", player.getPlayerNumber());
+    }
+
+    public int getSnowballCount() {
+        return snowballCount;
+    }
+
+    public boolean isSnowballMakeReady() {
+        return currentSnowballMakeCooldown;
+    }
+
+    public boolean isSnowballThrowReady() {
+        return currentSnowballThrowCooldown;
     }
 
     @Override

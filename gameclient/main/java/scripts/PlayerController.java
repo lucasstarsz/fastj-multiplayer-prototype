@@ -207,6 +207,10 @@ public class PlayerController implements Behavior {
         return rotation;
     }
 
+    public boolean isMoving() {
+        return isMoving;
+    }
+
     @Override
     public void destroy() {
         if (movementChecker != null) {

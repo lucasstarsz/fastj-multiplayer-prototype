@@ -32,7 +32,10 @@ import objects.Snowball;
 import scripts.PlayerController;
 import scripts.SnowballController;
 import ui.HealthBar;
+import ui.PercentageBox;
+import ui.StatusBox;
 import util.FilePaths;
+import util.Fonts;
 import util.SceneNames;
 import util.Tags;
 
@@ -52,6 +55,9 @@ public class GameScene extends Scene implements FocusListener {
     private final Map<Integer, Player> otherPlayers = new HashMap<>();
     private final Map<Integer, Transform2D> otherPlayerTransforms = new HashMap<>();
     private ScheduledExecutorService transformSync;
+
+    private PercentageBox<Integer> temperaturePercentageBox, hitDamagePercentageBox, snowballPercentageBox;
+    private StatusBox snowballThrowStatusBox, snowballMakeStatusBox;
 
     public GameScene() {
         super(SceneNames.GameScene);
@@ -74,15 +80,41 @@ public class GameScene extends Scene implements FocusListener {
 
         playerController = new PlayerController(this::updatePlayerInfo, inputManager, client, localPlayerNumber, this);
         player.addBehavior(playerController, this);
-        snowballController = new SnowballController(this, client);
+        snowballController = new SnowballController(this, client, this::updateSnowballInfo);
         player.addBehavior(snowballController, this);
         drawableManager.addGameObject(player);
 
         temperatureBar = new HealthBar(this, Color.red, 200);
         drawableManager.addUIElement(temperatureBar);
+        temperaturePercentageBox = new PercentageBox<>(this, temperatureBar.getHealthRemaining(), temperatureBar.getMaxHealth(), "Temp (C): ");
+        temperaturePercentageBox.getStatDisplay().setFont(Fonts.MonoStatTextFont);
+        temperaturePercentageBox.translate(Pointf.unit().multiply(15f, 5f));
+        drawableManager.addUIElement(temperaturePercentageBox);
+        Log.info("{}", drawableManager.getUIElements().keySet());
+
         hitDamageBar = new HealthBar(this, Color.red.darker().darker(), 200);
         hitDamageBar.translate(Pointf.down().multiply(45f));
         drawableManager.addUIElement(hitDamageBar);
+        hitDamagePercentageBox = new PercentageBox<>(this, hitDamageBar.getHealthRemaining(), hitDamageBar.getMaxHealth(), "Health: ");
+        hitDamagePercentageBox.getStatDisplay().setFont(Fonts.MonoStatTextFont);
+        hitDamagePercentageBox.translate(Pointf.unit().multiply(15f, 50f));
+        drawableManager.addUIElement(hitDamagePercentageBox);
+        Log.info("{}", drawableManager.getUIElements().keySet());
+
+        snowballPercentageBox = new PercentageBox<>(this, snowballController.getSnowballCount(), SnowballController.MaxSnowballsCarried, "Snowballs: ");
+        snowballPercentageBox.getStatDisplay().setFont(Fonts.StatTextFont);
+        snowballPercentageBox.translate(Pointf.down().multiply(90f));
+        drawableManager.addUIElement(snowballPercentageBox);
+
+        snowballMakeStatusBox = new StatusBox(this, "Make Snowball", false);
+        snowballMakeStatusBox.getStatDisplay().setFont(Fonts.SmallStatTextFont);
+        snowballMakeStatusBox.translate(Pointf.down().multiply(115f));
+        drawableManager.addUIElement(snowballMakeStatusBox);
+
+        snowballThrowStatusBox = new StatusBox(this, "Throw Snowball", false);
+        snowballThrowStatusBox.getStatDisplay().setFont(Fonts.SmallStatTextFont);
+        snowballThrowStatusBox.translate(Pointf.down().multiply(140f));
+        drawableManager.addUIElement(snowballThrowStatusBox);
 
         transformSync = Executors.newScheduledThreadPool(1);
         transformSync.scheduleWithFixedDelay(this::sendTransformSync, 1, 1, TimeUnit.SECONDS);
@@ -125,6 +157,9 @@ public class GameScene extends Scene implements FocusListener {
         player = null;
         playerController = null;
         snowballController = null;
+        snowballPercentageBox = null;
+        temperaturePercentageBox = null;
+        hitDamagePercentageBox = null;
         temperatureBar = null;
         hitDamageBar = null;
         localPlayerNumber = -1;
@@ -153,6 +188,13 @@ public class GameScene extends Scene implements FocusListener {
     }
 
     public void updatePlayerInfo() {
+    }
+
+    private void updateSnowballInfo() {
+        Log.info("{}", snowballController.getSnowballCount());
+        snowballPercentageBox.setCurrentValue(snowballController.getSnowballCount());
+        snowballThrowStatusBox.setCurrentStatus(snowballController.isSnowballThrowReady());
+        snowballMakeStatusBox.setCurrentStatus(snowballController.isSnowballMakeReady());
     }
 
     public void addNewPlayer(int newPlayerNumber) {
