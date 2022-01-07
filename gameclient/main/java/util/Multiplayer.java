@@ -9,6 +9,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -38,6 +39,10 @@ public class Multiplayer {
                     .build()
             );
 
+            if (hostname == null) {
+                return;
+            }
+
             DialogConfig connectingConfig = DialogConfig.create().withTitle("Connecting...")
                     .withPrompt("Connecting to " + hostname + "...")
                     .withParentComponent(FastJEngine.<SimpleDisplay>getDisplay().getWindow())
@@ -45,6 +50,7 @@ public class Multiplayer {
 
             JDialog connectingDialog = new JDialog((JFrame) connectingConfig.dialogParent(), connectingConfig.title(), true);
             JLabel connectingMessage = new JLabel((String) connectingConfig.prompt());
+            connectingMessage.setBorder(new EmptyBorder(10, 15, 15, 10));
             connectingDialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             connectingDialog.add(connectingMessage);
             connectingDialog.pack();
@@ -74,6 +80,7 @@ public class Multiplayer {
                 return;
             }
 
+            gameManager.setClient(client);
             GameScene gameScene = gameManager.getScene(SceneNames.GameScene);
             gameScene.setLocalPlayerNumber(playerNumber);
 

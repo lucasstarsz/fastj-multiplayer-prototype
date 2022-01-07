@@ -9,7 +9,7 @@ import tech.fastj.graphics.game.Text2D;
 import tech.fastj.graphics.ui.UIElement;
 import tech.fastj.graphics.util.DrawUtil;
 
-import tech.fastj.input.mouse.events.MouseButtonEvent;
+import tech.fastj.input.InputActionEvent;
 import tech.fastj.resources.models.ModelUtil;
 import tech.fastj.systems.control.Scene;
 import tech.fastj.systems.control.SimpleManager;
@@ -22,7 +22,7 @@ import java.util.Objects;
 
 import util.FilePaths;
 
-public class HealthBar extends UIElement {
+public class HealthBar extends UIElement<InputActionEvent> {
 
     private final int maxHealth;
     private int healthRemaining;
@@ -77,9 +77,6 @@ public class HealthBar extends UIElement {
         return healthRemaining == 0;
     }
 
-    @Override
-    public void onMousePressed(MouseButtonEvent mouseButtonEvent) {
-    }
 
     @Override
     public void renderAsGUIObject(Graphics2D g, Camera camera) {

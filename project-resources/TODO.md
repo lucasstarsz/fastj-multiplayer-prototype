@@ -8,7 +8,10 @@
 - [ ] Use dad's macbook to generate macOS executables/installers???
 - [ ] Test on separate machines (do that before the next bit) -- might need to force accept unverified cert?
 
+
+
 ## Multiplayer PvP
+
 - [x] Players make snowballs, then throw them
   - [x] Takes 1 second to make a snowball
   - [x] Can only carry 5 at a time
@@ -46,12 +49,20 @@
     - [ ] Player couldn't handle holding 8 snowballs (damage bar 0, warm mittens powerup)
     - [ ] Player discovered "The cold doesn't bother me anyways" does not apply to them. (Temp bar 0, took temp damage from standing still)
     - [ ] Player was sniped. (Death by snowball that traveled 777+ pixels)
+  - [ ] All: player chat
+    - [ ] option to have messages appear above people's heads
+      - [ ] in cabin, default above
+      - [ ] in-game, default to bottom left chat
 
 ## Lobbies
 - [x] Specify what host to connect to
 - [ ] Join lobby, everyone confirm readiness
   - [ ] Max 8 to a lobby?
+  - [ ] lobby should be INSIDE A WOOD CABIN
+    - [ ] references - sub? brack? fj? pkcord?
+  - [ ] everyone leaves cabin once everyone is ready
 - [ ] Position everyone in a circle around spawn
+  - [ ] run from cabin out to spawn
 - [ ] 3 2 1 go
 - [x] on player win, message dialog showing who won
 - [x] then, leave lobby
@@ -59,7 +70,18 @@
 
 
 ## Music
+
+- [ ] Gamemode Settings
+  - [ ] Computer to setup gamemode settings (spidertyler2005:tm:)
+
+
 - [ ] Check voice recorder for references
+- [ ] cabin has radio
+  - [ ] change the style of music on the radio
+  - [ ] chosen style of music carries over to the game battle
+
+
+
 
 ## Reeeeeeally Basic Sound Effects
 - [ ] Snowball throw
@@ -68,7 +90,10 @@
 - [ ] Player stun
 - [ ] Player freeze (sprite gets overlaid with frozen.png, player loses)
 
+
+
 ## Art
+
 - [ ] Prototype psdf looks in krita or even blender
 - [ ] Players are psdf ice climber knockoffs 2d homages to ice climbers -- coat color represents player number
 - [ ] Snowballs are snowballs
@@ -77,11 +102,14 @@
 - [ ] Coat
 - [ ] Snowball launcher
 
+
+
 ## UI Elements (yeah, make these) -- maybe mvc for updating them based on player info change?
+
 - [x] Health bars (for Lauren:tm:)
   - [x] Temp/damage bars bottom left above all
-- [ ] Stat-showing box
-  - [ ] Snowball count on bottom left of bars (snowball_image: x/y)
+- [x] Stat-showing box
+  - [x] Snowball count on bottom left of bars (snowball_image: x/y)
   - [ ] Current powerup on bottom right of bars (hover over to see what the powerup does)
   - [ ] Combined buffs/debuffs in top right (hover over to see individual buffs/debuffs?) (+/-x% agility image)
   - [ ] Players currently in lobby on top middle of screen, hold tab to view
@@ -94,27 +122,40 @@
   - [x] Open settings from main menu below multiplayer button
   - [ ] Confirm ready from lobby, bottom center of screen
   - [ ] Leave session to return to multiplayer, top left door with arrow image (open dialog for confirmation)
-- [ ] Arrowed Buttons
-  - [ ] Choose Graphics Settings (antialiasing, color rendering, subpixel rendering) (use the names for each setting state as the option shown)
+- [x] Arrowed Buttons
+  - [x] Choose Graphics Settings (antialiasing, color rendering, subpixel rendering) (use the names for each setting state as the option shown)
 - [x] Slider? Wow this is a lot of work
   - [x] Audio level (0-100, convert to audio level for fastj)
   - [ ] Sfx level (0-100, convert to audio level for fastj)
+- [ ] Radio Knob (aie)
+  - [ ] 
+
+
 
 ## Game Name
+
 - [x] Name the dang game why don't you
-  - [ ] call it "Hit!"
+  - [x] call it "Hit!"
   - [x] Or Snowball Fight or something
 
 
+
 ## Game Map
+
 - [ ] Mostly white background, tiny hints of blue and super light gray
 - [ ] Rocks that cannot be hit through? Or maybe just cosmetic for now
 
+
+
 ## Optional: Particles. Maybe.
+
 - [ ] Trail behind the snowball
 - [ ] Outward particles when the snowball hits something
 
+
+
 ## How To Play Screen
+
 - [ ] Take screenshots in-game to use as images to display actions
 - [ ] Make snowball
 - [ ] Throw snowball
@@ -133,7 +174,7 @@
 
 - [ ] Client data verification/watching
 - [ ] Server ip-ban/kick(/mute?)
-- [ ] Game settings
+- [x] Game settings
 - [ ] Art
 - [ ] Music
 - [ ] Sound effects

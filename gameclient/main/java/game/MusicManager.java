@@ -2,8 +2,8 @@ package game;
 
 import tech.fastj.systems.audio.AudioManager;
 import tech.fastj.systems.audio.StreamedAudio;
+import tech.fastj.systems.audio.state.PlaybackState;
 
-import javax.sound.sampled.FloatControl;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,30 +13,31 @@ public class MusicManager {
 
     public static final float InitialAudioLevel = 0.35f;
 
-    private final List<StreamedAudio> audio;
-    private final StreamedAudio trailblaze;
+    private final List<StreamedAudio> music;
+    private final StreamedAudio danceHype;
 
     public MusicManager(float initialAudioLevel) {
-        audio = new ArrayList<>();
-        trailblaze = AudioManager.loadStreamedAudio(FilePaths.Trailblaze);
-        trailblaze.getAudioEventListener().setAudioStopAction(lineEvent -> trailblaze.play());
-        audio.add(trailblaze);
+        music = new ArrayList<>();
+        danceHype = AudioManager.loadStreamedAudio(FilePaths.DanceHype);
+        danceHype.gainControl().setValue(20f * (float) Math.log10(initialAudioLevel));
 
-        FloatControl gain = trailblaze.gainControl();
-        float gainValue = 20f * (float) Math.log10(initialAudioLevel);
-        gain.setValue(gainValue);
+        music.add(danceHype);
     }
 
     public void playMainMusic() {
-        trailblaze.play();
+        danceHype.play();
     }
 
     public void pauseMainMusic() {
-        trailblaze.pause();
+        danceHype.pause();
     }
 
     public void setMusicLevel(float audioLevel) {
-        for (StreamedAudio streamedAudio : audio) {
+        for (StreamedAudio streamedAudio : music) {
+            if (streamedAudio.getCurrentPlaybackState() != PlaybackState.Playing) {
+                return;
+            }
+
             streamedAudio.pause();
             streamedAudio.gainControl().setValue(20f * (float) Math.log10(audioLevel));
             streamedAudio.resume();
@@ -44,7 +45,7 @@ public class MusicManager {
     }
 
     public void unloadAll() {
-        for (StreamedAudio streamedAudio : audio) {
+        for (StreamedAudio streamedAudio : music) {
             AudioManager.unloadStreamedAudio(streamedAudio.getID());
         }
     }

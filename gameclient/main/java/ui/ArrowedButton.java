@@ -12,6 +12,7 @@ import tech.fastj.graphics.util.DrawUtil;
 
 import tech.fastj.input.mouse.Mouse;
 import tech.fastj.input.mouse.MouseAction;
+import tech.fastj.input.mouse.MouseActionListener;
 import tech.fastj.input.mouse.MouseButtons;
 import tech.fastj.input.mouse.events.MouseButtonEvent;
 import tech.fastj.systems.control.Scene;
@@ -29,10 +30,11 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import java.util.function.Consumer;
 
 import util.Colors;
 
-public class ArrowedButton extends UIElement {
+public class ArrowedButton extends UIElement<MouseButtonEvent> implements MouseActionListener {
 
     public static final String DefaultText = "";
     public static final Paint DefaultFill = Color.lightGray;
@@ -90,6 +92,8 @@ public class ArrowedButton extends UIElement {
         this.options = options;
         this.selectedOption = selectedOption;
         setText(options.get(selectedOption));
+
+        origin.inputManager.addMouseActionListener(this);
     }
 
     public ArrowedButton(SimpleManager origin, Pointf location, Pointf initialSize, List<String> options, int selectedOption) {
@@ -129,6 +133,8 @@ public class ArrowedButton extends UIElement {
         this.options = options;
         this.selectedOption = selectedOption;
         setText(options.get(selectedOption));
+
+        origin.inputManager.addMouseActionListener(this);
     }
 
     @Override
@@ -194,7 +200,9 @@ public class ArrowedButton extends UIElement {
         }
 
         setText(options.get(selectedOption));
-        super.onMousePressed(mouseButtonEvent);
+        for (Consumer<MouseButtonEvent> onActionEvent : onActionEvents) {
+            onActionEvent.accept(mouseButtonEvent);
+        }
     }
 
     @Override
@@ -246,16 +254,18 @@ public class ArrowedButton extends UIElement {
 
     @Override
     public void destroy(Scene origin) {
+        super.destroyTheRest(origin);
         paint = null;
         renderPath = null;
-        super.destroyTheRest(origin);
+        origin.inputManager.removeMouseActionListener(this);
     }
 
     @Override
     public void destroy(SimpleManager origin) {
+        super.destroyTheRest(origin);
         paint = null;
         renderPath = null;
-        super.destroyTheRest(origin);
+        origin.inputManager.removeMouseActionListener(this);
     }
 
     private void setMetrics(Graphics2D g) {

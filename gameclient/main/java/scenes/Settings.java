@@ -3,13 +3,11 @@ package scenes;
 import tech.fastj.engine.FastJEngine;
 import tech.fastj.math.Pointf;
 import tech.fastj.math.Transform2D;
-import tech.fastj.graphics.Boundary;
 import tech.fastj.graphics.display.FastJCanvas;
 import tech.fastj.graphics.display.RenderSettings;
 import tech.fastj.graphics.game.Text2D;
 import tech.fastj.graphics.ui.elements.Button;
 
-import tech.fastj.input.mouse.events.MouseButtonEvent;
 import tech.fastj.systems.control.Scene;
 
 import java.awt.Color;
@@ -35,27 +33,19 @@ public class Settings extends Scene {
 
     private ArrowedButton antialiasButton;
     private Text2D antialiasText;
-    private static final Map<String, RenderSettings> AntialiasOptions = Map.of(
-            "On", RenderSettings.Antialiasing.Enable,
-            "Off", RenderSettings.Antialiasing.Disable
+    private static final Map<Integer, RenderSettings> AntialiasOptions = Map.of(
+            0, RenderSettings.Antialiasing.Enable,
+            1, RenderSettings.Antialiasing.Disable
     );
-    private static final Map<Integer, String> AntialiasArrowMap = Map.of(
-            0, "On",
-            1, "Off"
-    );
-    private static final List<String> AntialiasOptionsList = List.of(AntialiasArrowMap.get(0), AntialiasArrowMap.get(1));
+    private static final List<String> AntialiasOptionsList = List.of(AntialiasOptions.get(0).valueString, AntialiasOptions.get(1).valueString);
 
     private ArrowedButton alphaInterpolationButton;
     private Text2D alphaInterpolationText;
-    private static final Map<String, RenderSettings> AlphaInterpolationOptions = Map.of(
-            "High", RenderSettings.AlphaInterpolationQuality.High,
-            "Medium", RenderSettings.AlphaInterpolationQuality.Low
+    private static final Map<Integer, RenderSettings> AlphaInterpolationOptions = Map.of(
+            0, RenderSettings.AlphaInterpolationQuality.High,
+            1, RenderSettings.AlphaInterpolationQuality.Low
     );
-    private static final Map<Integer, String> AlphaInterpolationArrowMap = Map.of(
-            0, "High",
-            1, "Medium"
-    );
-    private static final List<String> AlphaInterpolationOptionsList = List.of(AlphaInterpolationArrowMap.get(0), AlphaInterpolationArrowMap.get(1));
+    private static final List<String> AlphaInterpolationOptionsList = List.of(AlphaInterpolationOptions.get(0).valueString, AlphaInterpolationOptions.get(1).valueString);
 
     public Settings() {
         super(SceneNames.Settings);
@@ -63,28 +53,22 @@ public class Settings extends Scene {
 
     @Override
     public void load(FastJCanvas canvas) {
-        musicLevel = new Slider(this, Sizes.NormalSlider) {
-            @Override
-            public void onMouseReleased(MouseButtonEvent mouseButtonEvent) {
-                MusicManager musicManager = FastJEngine.<GameManager>getLogicManager().getMusicManager();
-                musicManager.setMusicLevel(musicLevel.getSliderValue());
-            }
-        };
+        musicLevel = new Slider(this, Sizes.NormalSlider);
+        musicLevel.addOnReleaseAction(mouseButtonEvent -> {
+            MusicManager musicManager = FastJEngine.<GameManager>getLogicManager().getMusicManager();
+            musicManager.setMusicLevel(musicLevel.getSliderValue());
+        });
         musicLevel.setSliderPosition(MusicManager.InitialAudioLevel);
         musicLevel.translate(canvas.getCanvasCenter().subtract(0f, canvas.getCanvasCenter().y / 2.0f));
         musicLevel.translate(musicLevel.getCenter().subtract(musicLevel.getTranslation()).multiply(-1f));
-        drawableManager.addUIElement(musicLevel);
-
         musicSliderText = Drawables.centered(Text2D.create("Music Volume")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(musicLevel.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
                 .build()
         );
-        musicSliderText.translate(new Pointf(
-                -musicSliderText.getBound(Boundary.TopRight).subtract(musicSliderText.getBound(Boundary.TopLeft)).x / 1.5f,
-                musicSliderText.getBound(Boundary.BottomRight).subtract(musicSliderText.getBound(Boundary.TopRight)).y / 1.5f
-        ));
+        musicSliderText.translate(new Pointf(-musicSliderText.width(), musicSliderText.height()).divide(1.5f));
+        drawableManager.addUIElement(musicLevel);
         drawableManager.addGameObject(musicSliderText);
 
         antialiasButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButton, AntialiasOptionsList, 0);
@@ -92,21 +76,17 @@ public class Settings extends Scene {
         antialiasButton.translate(antialiasButton.getCenter().subtract(antialiasButton.getTranslation()).multiply(-1f));
         antialiasButton.setFill(Colors.Snowy);
         antialiasButton.addOnAction(mouseButtonEvent -> {
-            RenderSettings renderSetting = AntialiasOptions.get(AntialiasArrowMap.get(antialiasButton.getSelectedOption()));
+            RenderSettings renderSetting = AntialiasOptions.get(antialiasButton.getSelectedOption());
             canvas.modifyRenderSettings(renderSetting);
         });
-        drawableManager.addUIElement(antialiasButton);
-
         antialiasText = Drawables.centered(Text2D.create("Antialiasing")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(antialiasButton.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
                 .build()
         );
-        antialiasText.translate(new Pointf(
-                -antialiasText.getBound(Boundary.TopRight).subtract(antialiasText.getBound(Boundary.TopLeft)).x,
-                antialiasText.getBound(Boundary.BottomRight).subtract(antialiasText.getBound(Boundary.TopRight)).y / 1.5f
-        ));
+        antialiasText.translate(new Pointf(-antialiasText.width(), antialiasText.height() / 1.5f));
+        drawableManager.addUIElement(antialiasButton);
         drawableManager.addGameObject(antialiasText);
 
         alphaInterpolationButton = new ArrowedButton(this, Pointf.origin(), Sizes.SmallButton, AlphaInterpolationOptionsList, 0);
@@ -114,23 +94,18 @@ public class Settings extends Scene {
         alphaInterpolationButton.translate(alphaInterpolationButton.getCenter().subtract(alphaInterpolationButton.getTranslation()).multiply(-1f));
         alphaInterpolationButton.setFill(Colors.Snowy);
         alphaInterpolationButton.addOnAction(mouseButtonEvent -> {
-            RenderSettings renderSetting = AlphaInterpolationOptions.get(AlphaInterpolationArrowMap.get(alphaInterpolationButton.getSelectedOption()));
+            RenderSettings renderSetting = AlphaInterpolationOptions.get(alphaInterpolationButton.getSelectedOption());
             canvas.modifyRenderSettings(renderSetting);
         });
-        drawableManager.addUIElement(alphaInterpolationButton);
-
         alphaInterpolationText = Drawables.centered(Text2D.create("Alpha Interpolation")
                 .withFont(Fonts.ButtonTextFont)
                 .withFill(Color.black)
                 .withTransform(alphaInterpolationButton.getTranslation(), Transform2D.DefaultRotation, Transform2D.DefaultScale)
                 .build()
         );
-        alphaInterpolationText.translate(new Pointf(
-                -alphaInterpolationText.getBound(Boundary.TopRight).subtract(alphaInterpolationText.getBound(Boundary.TopLeft)).x * 0.75f,
-                alphaInterpolationText.getBound(Boundary.BottomRight).subtract(alphaInterpolationText.getBound(Boundary.TopRight)).y / 1.5f
-        ));
+        alphaInterpolationText.translate(new Pointf(-alphaInterpolationText.width() * 0.75f, alphaInterpolationText.height() / 1.5f));
+        drawableManager.addUIElement(alphaInterpolationButton);
         drawableManager.addGameObject(alphaInterpolationText);
-
 
         backToMainMenuButton = Drawables.centered(new Button(this, canvas.getCanvasCenter().add(0f, canvas.getCanvasCenter().y / 1.5f), Sizes.NormalButton)
                 .setFill(Colors.Snowy)

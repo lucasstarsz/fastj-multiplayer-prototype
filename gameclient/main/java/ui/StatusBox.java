@@ -4,7 +4,7 @@ import tech.fastj.graphics.display.Camera;
 import tech.fastj.graphics.game.Text2D;
 import tech.fastj.graphics.ui.UIElement;
 
-import tech.fastj.input.mouse.events.MouseButtonEvent;
+import tech.fastj.input.InputActionEvent;
 import tech.fastj.systems.control.Scene;
 import tech.fastj.systems.control.SimpleManager;
 
@@ -13,7 +13,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 
-public class StatusBox extends UIElement {
+public class StatusBox extends UIElement<InputActionEvent> {
 
     public static final String DefaultStatSeparator = ": ";
     public static final String DefaultFormat = "%s" + DefaultStatSeparator + "%s";
@@ -117,9 +117,5 @@ public class StatusBox extends UIElement {
         destroyTheRest(origin);
         currentStatus = false;
         statDisplay = null;
-    }
-
-    @Override
-    public void onMousePressed(MouseButtonEvent mouseButtonEvent) {
     }
 }

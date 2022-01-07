@@ -7,11 +7,11 @@ import java.util.Objects;
 import core.util.FilePathUtil;
 
 public class FilePaths {
-    public static final Path Player = FilePathUtil.pathFromClassLoad(FilePaths.class, "/player.psdf");
-    public static final Path PlayerArrow = FilePathUtil.pathFromClassLoad(FilePaths.class, "/playerarrow.psdf");
-    public static final Path Snowball = FilePathUtil.pathFromClassLoad(FilePaths.class, "/snowball.psdf");
-    public static final Path HealthBar = FilePathUtil.pathFromClassLoad(FilePaths.class, "/healthbar.psdf");
-    public static final Path Trailblaze = Path.of("Trailblaze 0_10.wav");
+    public static final Path Player = FilePathUtil.pathFromClassLoad(FilePaths.class, "/player.psdf", "jar");
+    public static final Path PlayerArrow = FilePathUtil.pathFromClassLoad(FilePaths.class, "/playerarrow.psdf", "jar");
+    public static final Path Snowball = FilePathUtil.pathFromClassLoad(FilePaths.class, "/snowball.psdf", "jar");
+    public static final Path HealthBar = FilePathUtil.pathFromClassLoad(FilePaths.class, "/healthbar.psdf", "jar");
+    public static final Path DanceHype = Path.of("music/Dance_Hype.wav");
     public static final String PublicGameKey = "/clientts.pkcs12";
 
     public static final InputStream NotoSansRegular = streamResourceFromFolder("/notosans/NotoSans-Regular.ttf");

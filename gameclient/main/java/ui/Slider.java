@@ -13,8 +13,10 @@ import tech.fastj.graphics.ui.UIElement;
 import tech.fastj.graphics.util.DrawUtil;
 
 import tech.fastj.input.mouse.Mouse;
+import tech.fastj.input.mouse.MouseActionListener;
 import tech.fastj.input.mouse.events.MouseButtonEvent;
 import tech.fastj.input.mouse.events.MouseMotionEvent;
+import tech.fastj.input.mouse.events.MouseWindowEvent;
 import tech.fastj.systems.control.Scene;
 import tech.fastj.systems.control.SimpleManager;
 
@@ -22,26 +24,23 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 import util.Colors;
 
-public class Slider extends UIElement {
+public class Slider extends UIElement<MouseButtonEvent> implements MouseActionListener {
 
     private final Polygon2D sliderBase;
     private final Polygon2D interactiveSliderObject;
-    private final List<Consumer<MouseMotionEvent>> onActionEvents;
     private final float mininum, maximum;
 
     private float sliderPosition;
     private EventCondition onActionCondition;
 
+    private boolean hasFocus;
+
     public Slider(Scene origin, Pointf size) {
         super(origin);
-        onActionEvents = new ArrayList<>();
         sliderBase = Polygon2D.create(DrawUtil.createBox(new Pointf(0f, size.y / 2f), new Pointf(size.x, 1f)))
                 .withFill(Color.darkGray)
                 .build();
@@ -60,12 +59,12 @@ public class Slider extends UIElement {
                 new Pointf(maximum, interactiveSliderObject.getBound(Boundary.BottomRight).y)
         )));
         onActionCondition = event -> Mouse.getMouseLocation().intersects(this.getCollisionPath());
-        Log.info("{} {}", Arrays.toString(sliderBase.getPoints()), Arrays.toString(interactiveSliderObject.getPoints()));
+
+        origin.inputManager.addMouseActionListener(this);
     }
 
     public Slider(SimpleManager origin, Pointf size) {
         super(origin);
-        onActionEvents = new ArrayList<>();
         sliderBase = Polygon2D.create(DrawUtil.createBox(new Pointf(0f, size.y / 2f), new Pointf(size.x, 1f)))
                 .withFill(Color.darkGray)
                 .build();
@@ -84,7 +83,8 @@ public class Slider extends UIElement {
                 new Pointf(maximum, interactiveSliderObject.getBound(Boundary.BottomRight).y)
         )));
         onActionCondition = event -> Mouse.getMouseLocation().intersects(this.getCollisionPath());
-        Log.info("{} {}", Arrays.toString(sliderBase.getPoints()), Arrays.toString(interactiveSliderObject.getPoints()));
+
+        origin.inputManager.addMouseActionListener(this);
     }
 
     public float getSliderValue() {
@@ -92,9 +92,7 @@ public class Slider extends UIElement {
     }
 
     public void setSliderPosition(float percentage) {
-        Log.info("was {}", sliderPosition);
         sliderPosition = Maths.denormalize(percentage, mininum, maximum);
-        Log.info("now {}", sliderPosition);
         interactiveSliderObject.setTranslation(new Pointf(
                 Maths.withinRange(sliderPosition, mininum, maximum),
                 0f
@@ -105,35 +103,69 @@ public class Slider extends UIElement {
         onActionCondition = condition;
     }
 
-    public UIElement setOnDragAction(Consumer<MouseMotionEvent> action) {
+    public UIElement<MouseButtonEvent> setOnReleaseAction(Consumer<MouseButtonEvent> action) {
         onActionEvents.clear();
         onActionEvents.add(action);
         return this;
     }
 
-    public UIElement addOnDragAction(Consumer<MouseMotionEvent> action) {
+    public UIElement<MouseButtonEvent> addOnReleaseAction(Consumer<MouseButtonEvent> action) {
         onActionEvents.add(action);
         return this;
     }
 
     @Override
-    public void onMousePressed(MouseButtonEvent mouseButtonEvent) {
+    public void onMouseDragged(MouseMotionEvent mouseMotionEvent) {
+        if (hasFocus) {
+            Pointf mouseLocation = mouseMotionEvent.getMouseLocation().divide(FastJEngine.getCanvas().getResolutionScale());
+            moveSlider(mouseLocation);
+        }
     }
 
     @Override
-    public void onMouseDragged(MouseMotionEvent mouseMotionEvent) {
-        if (onActionCondition.condition(mouseMotionEvent)) {
-            Pointf mouseLocation = mouseMotionEvent.getMouseLocation().divide(FastJEngine.getCanvas().getResolutionScale());
-            sliderPosition = Maths.withinRange(
-                    mouseLocation.x - getTranslation().x,
-                    mininum,
-                    maximum
-            );
-            float interactiveSliderObjectWidth = interactiveSliderObject.getBound(Boundary.TopRight).x - interactiveSliderObject.getBound(Boundary.TopLeft).x;
-            interactiveSliderObject.setTranslation(new Pointf(sliderPosition - interactiveSliderObjectWidth / 2f, 0f));
-            Log.info("{} {} {}", mouseLocation, sliderPosition, interactiveSliderObject.getTranslation());
-            onActionEvents.forEach(action -> action.accept(mouseMotionEvent));
+    public void onMouseReleased(MouseButtonEvent mouseButtonEvent) {
+        if (hasFocus) {
+            hasFocus = false;
+            Pointf mouseLocation = Mouse.getMouseLocation().divide(FastJEngine.getCanvas().getResolutionScale());
+            moveSlider(mouseLocation);
+            for (Consumer<MouseButtonEvent> onActionEvent : onActionEvents) {
+                onActionEvent.accept(mouseButtonEvent);
+            }
         }
+        if (onActionCondition.condition(mouseButtonEvent)) {
+            hasFocus = true;
+        }
+    }
+
+    @Override
+    public void onMousePressed(MouseButtonEvent mouseButtonEvent) {
+        hasFocus = onActionCondition.condition(mouseButtonEvent);
+    }
+
+    @Override
+    public void onMouseClicked(MouseButtonEvent mouseButtonEvent) {
+        hasFocus = onActionCondition.condition(mouseButtonEvent);
+    }
+
+    @Override
+    public void onMouseEntersScreen(MouseWindowEvent mouseWindowEvent) {
+        hasFocus = false;
+    }
+
+    @Override
+    public void onMouseExitsScreen(MouseWindowEvent mouseWindowEvent) {
+        hasFocus = false;
+    }
+
+    private void moveSlider(Pointf mouseLocation) {
+        sliderPosition = Maths.withinRange(
+                mouseLocation.x - getTranslation().x,
+                mininum,
+                maximum
+        );
+        float interactiveSliderObjectWidth = interactiveSliderObject.getBound(Boundary.TopRight).x - interactiveSliderObject.getBound(Boundary.TopLeft).x;
+        interactiveSliderObject.setTranslation(new Pointf(sliderPosition - interactiveSliderObjectWidth / 2f, 0f));
+        Log.info("{} {} {}", mouseLocation, sliderPosition, interactiveSliderObject.getTranslation());
     }
 
     @Override
@@ -165,10 +197,14 @@ public class Slider extends UIElement {
         super.destroyTheRest(origin);
         onActionCondition = null;
         sliderPosition = 0f;
+        origin.inputManager.removeMouseActionListener(this);
     }
 
     @Override
     public void destroy(SimpleManager origin) {
-
+        super.destroyTheRest(origin);
+        onActionCondition = null;
+        sliderPosition = 0f;
+        origin.inputManager.removeMouseActionListener(this);
     }
 }

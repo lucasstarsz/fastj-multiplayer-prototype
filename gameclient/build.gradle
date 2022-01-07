@@ -6,7 +6,7 @@ plugins {
 
 group('io.github.lucasstarsz')
 version('0.0.1')
-description('A multiplayer game of some sort.')
+description('WIP | A game of some sort. | WIP')
 
 application.getMainClass().set('game.ClientMain')
 application.mainModule.set('tech.fastj.multiplayer.game')
@@ -36,11 +36,22 @@ jlink {
     )
 
     launcher {
-        name = project.name
+        name = 'Snowball Fight'
         noConsole = false
     }
 
     forceMerge('slf4j-api', 'slf4j-simple')
+
+    jpackageImage {
+        doLast {
+            copy {
+                from("music") {
+                    include "*.*"
+                }
+                into "$buildDir/jpackage/Snowball Fight/music"
+            }
+        }
+    }
 
     jpackage {
 
@@ -50,9 +61,13 @@ jlink {
         addExtraDependencies("slf4j")
 
         installerOptions += [
+                '--name', 'Snowball Fight',
                 '--description', project.description,
                 '--vendor', project.group,
-                '--app-version', project.version
+                '--app-version', project.version,
+                '--license-file', "$rootDir/LICENSE.md",
+                '--copyright', 'Copyright (c) 2022 Andrew Dey',
+                '--vendor', 'Andrew Dey'
         ]
 
 

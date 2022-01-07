@@ -1,5 +1,5 @@
 [versions]
-fastj-core = "1.6.0-SNAPSHOT-3"
+fastj-core = "462726ad33"
 slf4j-simple = "2.0.0-alpha3"
 
 [libraries]
