@@ -19,6 +19,7 @@ public class FilePaths {
     public static final InputStream NotoSansBoldItalic = streamResourceFromFolder("/notosans/NotoSans-BoldItalic.ttf");
     public static final InputStream NotoSansItalic = streamResourceFromFolder("/notosans/NotoSans-Italic.ttf");
     public static final InputStream NotoSansMono = streamResourceFromFolder("/notosansmono/NotoSansMono-VariableFont_wdth,wght.ttf");
+    public static final InputStream GameIcon = streamResourceFromFolder("/fastj_icon.png");
 
     public static InputStream streamResourceFromFolder(String resourcePath) {
         return Objects.requireNonNull(

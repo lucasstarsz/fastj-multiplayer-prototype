@@ -11,7 +11,9 @@ import tech.fastj.graphics.display.SimpleDisplay;
 import tech.fastj.input.keyboard.Keys;
 import tech.fastj.systems.control.SceneManager;
 
+import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import core.util.Networking;
@@ -21,6 +23,7 @@ import scenes.MainMenu;
 import scenes.Settings;
 import util.Colors;
 import util.Dialogs;
+import util.FilePaths;
 import util.SceneNames;
 import util.Scenes;
 
@@ -37,6 +40,12 @@ public class GameManager extends SceneManager {
     public void init(FastJCanvas canvas) {
         canvas.setBackgroundColor(Colors.SnowyBlue.darker());
         canvas.modifyRenderSettings(RenderSettings.Antialiasing.Enable);
+        try {
+            BufferedImage icon = ImageIO.read(FilePaths.GameIcon);
+            FastJEngine.<SimpleDisplay>getDisplay().setIcon(icon);
+        } catch (IOException exception) {
+            throw new IllegalStateException(exception);
+        }
 
         musicManager = new MusicManager(MusicManager.InitialAudioLevel);
 
