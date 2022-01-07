@@ -45,10 +45,15 @@ jlink {
     jpackageImage {
         doLast {
             copy {
-                from("music") {
-                    include "*.*"
-                }
-                into "$buildDir/jpackage/Snowball Fight/music"
+                from("music") include("*.*")
+                into("$buildDir/jpackage/Snowball Fight/music")
+            }
+            copy {
+                from("music") include("*.*")
+                into("$buildDir/jpackage/Snowball Fight/runtime/bin/music")
+            }
+            delete fileTree("$buildDir/jpackage/Snowball Fight/runtime") {
+                include "release", "bin/api**.dll", "lib/jrt-fs.jar"
             }
         }
     }
