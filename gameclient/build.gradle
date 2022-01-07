@@ -30,9 +30,9 @@ jlink {
 
     options.addAll(
             '--strip-debug',
-            '--compress', '2',
             '--no-header-files',
-            '--no-man-pages'
+            '--no-man-pages',
+            '--compress', '1',
     )
 
     launcher {
@@ -46,6 +46,8 @@ jlink {
 
         def iconPath = '../project-resources/fastj_icon'
         def currentOs = org.gradle.internal.os.OperatingSystem.current()
+
+        addExtraDependencies("slf4j")
 
         installerOptions += [
                 '--description', project.description,

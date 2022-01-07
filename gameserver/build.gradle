@@ -30,9 +30,9 @@ jlink {
 
     options.addAll(
             '--strip-debug',
-            '--compress', '2',
             '--no-header-files',
-            '--no-man-pages'
+            '--no-man-pages',
+            '--compress', '2',
     )
 
     launcher {
